@@ -34,11 +34,13 @@ object QrCodeLoginMonitor {
                     logger.debug { "[$id] 成功获取登录结果, 正在处理中..." }
                     var repeatLogin = false
                     var userId: Long? = null
+                    var userNick: String? = null
                     if (success) {
                         val cookies = handleCookies(cookie!!)
                         logger.debug { "登录成功, 正在录入数据库..." }
-                        userId = NeteaseCloud.getUserId(cookie)
+                        userId = NeteaseCloud.getUserId(cookies)
                         repeatLogin = NeteaseCloudUserPO.hasUser(userId)
+                        userNick = NeteaseCloud.getUserName(cookies)
                         recordUserInfo(cookies)
                     }
 
@@ -50,7 +52,8 @@ object QrCodeLoginMonitor {
                               "success": $success,
                               "message": "$message",
                               "repeatLogin": $repeatLogin,
-                              "userId": ${userId ?: -1}
+                              "userId": ${userId ?: -1},
+                              "userName": "$userNick"
                             }
                         """.trimIndent()
                         for (session in sessions) {
@@ -97,7 +100,6 @@ object QrCodeLoginMonitor {
         val antiRepeat = HashSet<String>()
         cookies.split(";").filter {
             val ck = it.trim()
-            // ck.startsWith("NMTID") || ck.startsWith("__csrf")
             ck.startsWith("MUSIC_U")
         }.forEach {
             if (!antiRepeat.contains(it)) {
