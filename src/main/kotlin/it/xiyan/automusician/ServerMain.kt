@@ -30,7 +30,7 @@ fun main(): Unit = runBlocking {
                 call.respondHtml(HttpStatusCode.OK, HTML::index)
             }
 
-            get("/login") {
+            get("/qrlogin") {
                 call.respondHtml(HttpStatusCode.OK, HTML::loginPage)
             }
 

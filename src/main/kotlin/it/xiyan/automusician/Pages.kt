@@ -24,9 +24,9 @@ fun HTML.index() {
             +"一个很棒的自动工人程序！"
         }
         div(classes = "center") {
-            a(href = "login") {
+            a(href = "qrlogin") {
                 button {
-                    +"加入"
+                    +"二维码登录"
                 }
             }
         }
