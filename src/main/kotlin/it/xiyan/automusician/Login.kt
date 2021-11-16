@@ -33,21 +33,22 @@ object QrCodeLoginMonitor {
     private fun startLoginResultReportCoroutine(id: UUID): Job {
         val job =
             NeteaseCloud.waitForQrCodeLoginResultAsync(id) { success, _, message, cookie ->
-                logger.debug { "[$id] 成功获取登录结果, 正在处理中..." }
-                var repeatLogin = false
-                var userId: Long? = null
-                if (success) {
-                    val cookies = handleCookies(cookie!!)
-                    logger.debug { "登录成功, 正在录入数据库..." }
-                    userId = NeteaseCloud.getUserId(cookie)
-                    repeatLogin = hasUser(userId)
-                    recordUserInfo(cookies)
-                }
+                try {
+                    logger.debug { "[$id] 成功获取登录结果, 正在处理中..." }
+                    var repeatLogin = false
+                    var userId: Long? = null
+                    if (success) {
+                        val cookies = handleCookies(cookie!!)
+                        logger.debug { "登录成功, 正在录入数据库..." }
+                        userId = NeteaseCloud.getUserId(cookie)
+                        repeatLogin = NeteaseCloudUserPO.hasUser(userId)
+                        recordUserInfo(cookies)
+                    }
 
-                val sessions = sessionMap[id]
-                CoroutineScope(Dispatchers.IO).launch {
-                    logger.debug { "[$id] 正在将登录状况回报给客户端..." }
-                    val responseBody = """
+                    val sessions = sessionMap[id]
+                    CoroutineScope(Dispatchers.IO).launch {
+                        logger.debug { "[$id] 正在将登录状况回报给客户端..." }
+                        val responseBody = """
                             {
                               "success": $success,
                               "message": "$message",
@@ -55,17 +56,21 @@ object QrCodeLoginMonitor {
                               "userId": ${userId ?: -1}
                             }
                         """.trimIndent()
-                    for (session in sessions) {
-                        // FIXME(LamGC, 2021.11.15): 浏览器那侧的登录回报还是会在收到消息后掉线，需要检查一下原因。
-                        logger.debug { "正在发送给 $session" }
-                        if (!session.isActive) {
-                            continue
+                        for (session in sessions) {
+                            // FIXME(LamGC, 2021.11.15): 浏览器那侧的登录回报还是会在收到消息后掉线，需要检查一下原因。
+                            logger.debug { "正在发送给 $session" }
+                            if (!session.isActive) {
+                                continue
+                            }
+                            session.outgoing.send(Frame.Text(responseBody))
+                            session.flush()
                         }
-                        session.outgoing.send(Frame.Text(responseBody))
-                        session.flush()
+                        logger.debug { "[$id] 回报完成." }
+                        delay(2500)
                     }
-                    logger.debug { "[$id] 回报完成." }
-                    delay(2500)
+                } finally {
+                    loginIdSet.remove(id)
+                    sessionMap.remove(id)
                 }
             }
         logger.debug { "[$id] 已启动回报协程." }
