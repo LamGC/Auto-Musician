@@ -3,13 +3,10 @@ package it.xiyan.automusician
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
 import mu.KotlinLogging
-import org.ktorm.dsl.eq
 import org.ktorm.entity.add
-import org.ktorm.entity.find
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.HashSet
 
 private val logger = KotlinLogging.logger {  }
 
@@ -77,13 +74,9 @@ object QrCodeLoginMonitor {
         return job
     }
 
-    private fun getUserById(userId: Long): NeteaseCloudUser? = database.NeteaseCloudUserPO.find { it.id eq userId }
-
-    private fun hasUser(userId: Long): Boolean = getUserById(userId) != null
-
     private fun recordUserInfo(cookie: String): NeteaseCloudUser {
         val userId = NeteaseCloud.getUserId(cookie)
-        val findUser = getUserById(userId)
+        val findUser = NeteaseCloudUserPO.getUserById(userId)
         if (findUser != null) {
             logger.debug { "用户已存在, 跳过添加." }
             return findUser

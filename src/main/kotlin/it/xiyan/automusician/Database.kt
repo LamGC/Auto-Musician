@@ -2,6 +2,8 @@ package it.xiyan.automusician
 
 import mu.KotlinLogging
 import org.ktorm.database.Database
+import org.ktorm.dsl.eq
+import org.ktorm.entity.find
 import org.ktorm.entity.sequenceOf
 import org.ktorm.schema.*
 import java.sql.DriverManager
@@ -41,9 +43,13 @@ fun initialDatabase() {
 
 object NeteaseCloudUserPO: Table<NeteaseCloudUser>("musician_users") {
     // id 是 音乐工人 里面的唯一 id, 可以记录其他信息.
-    val id = long("uid").primaryKey().bindTo { it.uid }
+    private val id = long("uid").primaryKey().bindTo { it.uid }
     val cookies = varchar("cookies").bindTo { it.cookies }
     val loginDate = datetime("login_date").bindTo { it.loginDate }
+
+    fun getUserById(userId: Long): NeteaseCloudUser? = database.NeteaseCloudUserPO.find { it.id eq userId }
+
+    fun hasUser(userId: Long): Boolean = getUserById(userId) != null
 }
 
 val Database.NeteaseCloudUserPO get() = this.sequenceOf(it.xiyan.automusician.NeteaseCloudUserPO)
