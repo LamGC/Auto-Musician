@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import mu.KotlinLogging
 import org.apache.hc.core5.http.HttpResponse
 import org.ktorm.entity.Entity
+import java.io.IOException
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
@@ -58,7 +59,7 @@ object NeteaseCloud {
                 if (!success) {
                     throw cause!!
                 } else {
-                    return@get adapter.fromJson(content!!)!!.data["unikey"]!!
+                    return@get adapter.fromJson(content!!)!!.data!!["unikey"]!!
                 }
             }))
     }
@@ -74,7 +75,7 @@ object NeteaseCloud {
                     throw cause!!
                 } else {
                     val response = adapter.fromJson(content!!)!!
-                    return@get LoginQrCode(response.data["qrurl"]!!, response.data["qrimg"]!!)
+                    return@get LoginQrCode(response.data!!["qrurl"]!!, response.data["qrimg"]!!)
                 }
             })
     }
@@ -109,16 +110,22 @@ object NeteaseCloud {
         return job
     }
 
-    fun logout(cookie: String) {
-        HttpUtils.get("/logout".toApiUrl(), cookie) { _, _, _, _ ->
+    fun logout(cookie: String): Boolean {
+        return HttpUtils.get("/logout".toApiUrl(), cookie) { success, response, content, _ ->
+            success && (response?.notError() ?: false) && adapter.fromJson(content!!)?.code == 200
         }
     }
 
     private val accountAdapter = Constants.moshi.adapter(NeteaseCloudUserAccount::class.java)
 
     private fun getUserAccount(cookie: String): NeteaseCloudUserAccount {
-        return HttpUtils.get("/user/account?cookie=${URLEncoder.encode(cookie, StandardCharsets.UTF_8)}".toApiUrl()) { success, response, content, cause ->
-            return@get accountAdapter.nonNull().fromJson(content!!)!!
+        return HttpUtils.get("/user/account?cookie=${URLEncoder.encode(cookie, StandardCharsets.UTF_8)}".toApiUrl())
+        { success, response, content, _ ->
+            if (success) {
+                return@get accountAdapter.nonNull().fromJson(content!!)!!
+            } else {
+                throw IOException("The HTTP request failed with a status code other than 200: ${response?.code}")
+            }
         }
     }
 
@@ -132,7 +139,7 @@ object NeteaseCloud {
 
 }
 
-data class ApiResponse(val code: Int, val data: Map<String, String>)
+data class ApiResponse(val code: Int, val data: Map<String, String>?)
 
 data class QrCodeLoginCheckResponse(val code: Int, val message: String, val cookie: String?)
 
