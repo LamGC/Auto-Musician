@@ -4,6 +4,7 @@ import io.ktor.http.*
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.classic.methods.HttpPost
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
+import org.apache.hc.core5.http.HttpEntity
 import org.apache.hc.core5.http.HttpResponse
 import org.apache.hc.core5.http.io.entity.EntityUtils
 import org.apache.hc.core5.http.io.entity.StringEntity
@@ -82,10 +83,15 @@ object HttpUtils {
     }
 
     fun <R> post(url: String, body: String,
+                 requestEntity: HttpEntity? = null,
                  cookie: String?,
                  action: (success: Boolean, response: HttpResponse?, content: String?, cause: Throwable?) -> R): R {
         val request = HttpPost(url)
-        request.entity = StringEntity(body)
+        if (requestEntity != null) {
+            request.entity = requestEntity
+        } else if (body.isNotEmpty()) {
+            request.entity = StringEntity(body)
+        }
 
         if (cookie != null) {
             request.setHeader(HttpHeaders.Cookie, cookie)
@@ -99,6 +105,10 @@ object HttpUtils {
         }
     }
 
+}
+
+fun HttpResponse.notError(): Boolean {
+    return this.code !in 400..599
 }
 
 class MultiValueMap<K, V>: MutableMap<K, MutableList<V>> {
