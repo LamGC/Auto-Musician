@@ -29,7 +29,7 @@ object QrCodeLoginMonitor {
 
     private fun startLoginResultReportCoroutine(id: UUID): Job {
         val job =
-            NeteaseCloud.waitForQrCodeLoginResultAsync(id) { success, _, message, cookie ->
+            NeteaseCloud.waitForQrCodeLoginResultAsync(id) { success, code, message, cookie ->
                 try {
                     logger.debug { "[$id] 成功获取登录结果, 正在处理中..." }
                     var repeatLogin = false
@@ -60,17 +60,23 @@ object QrCodeLoginMonitor {
                             // FIXME(LamGC, 2021.11.15): 浏览器那侧的登录回报还是会在收到消息后掉线，需要检查一下原因。
                             logger.debug { "正在发送给 $session" }
                             if (!session.isActive) {
+                                logger.debug { "会话已失效, 跳过发送." }
                                 continue
                             }
                             session.outgoing.send(Frame.Text(responseBody))
-                            session.flush()
                         }
                         logger.debug { "[$id] 回报完成." }
-                        delay(2500)
                     }
                 } finally {
-                    loginIdSet.remove(id)
-                    sessionMap.remove(id)
+                    if (code !in 801..802) {
+                        loginIdSet.remove(id)
+                        CoroutineScope(Dispatchers.IO).launch {
+                            for (session in sessionMap[id]) {
+                                session.close()
+                            }
+                            sessionMap.remove(id)
+                        }
+                    }
                 }
             }
         logger.debug { "[$id] 已启动回报协程." }
