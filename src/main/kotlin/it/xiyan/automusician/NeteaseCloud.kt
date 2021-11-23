@@ -21,7 +21,7 @@ interface NeteaseCloudUser: Entity<NeteaseCloudUser> {
     var loginDate: LocalDateTime
 }
 
-internal fun String.toApiUrl(): String {
+internal fun String.toApiUrl(cookie: String? = null): String {
     val apiUrl = if (this.startsWith("/")) {
         if (Constants.serverProp.apiServer.endsWith("/")) {
             Constants.serverProp.apiServer + this.substring(1)
@@ -40,12 +40,12 @@ internal fun String.toApiUrl(): String {
         apiUrl + "?time=${System.currentTimeMillis()}"
     } else {
         apiUrl + "&time=${System.currentTimeMillis()}"
-    }
-
+    } + if (cookie != null) "&cookie=${URLEncoder.encode(cookie, StandardCharsets.UTF_8)}" else ""
 }
 
+private val apiResponseAdapter = Constants.moshi.adapter(ApiResponseEntity::class.java)!!
+
 object NeteaseCloud {
-    private val adapter = Constants.moshi.adapter(ApiResponse::class.java)!!
 
     /**
      * 创建登录用 QR 码的 Id.
@@ -59,7 +59,7 @@ object NeteaseCloud {
                 if (!success) {
                     throw cause!!
                 } else {
-                    return@get adapter.fromJson(content!!)!!.data!!["unikey"]!!
+                    return@get apiResponseAdapter.fromJson(content!!)!!.data!!["unikey"]!!
                 }
             }))
     }
@@ -74,7 +74,7 @@ object NeteaseCloud {
                 if (!success) {
                     throw cause!!
                 } else {
-                    val response = adapter.fromJson(content!!)!!
+                    val response = apiResponseAdapter.fromJson(content!!)!!
                     return@get LoginQrCode(response.data!!["qrurl"]!!, response.data["qrimg"]!!)
                 }
             })
@@ -112,14 +112,14 @@ object NeteaseCloud {
 
     fun logout(cookie: String): Boolean {
         return HttpUtils.get("/logout".toApiUrl(), cookie) { success, response, content, _ ->
-            success && (response?.notError() ?: false) && adapter.fromJson(content!!)?.code == 200
+            success && (response?.notError() ?: false) && apiResponseAdapter.fromJson(content!!)?.code == 200
         }
     }
 
     private val accountAdapter = Constants.moshi.adapter(NeteaseCloudUserAccount::class.java)
 
-    private fun getUserAccount(cookie: String): NeteaseCloudUserAccount {
-        return HttpUtils.get("/user/account?cookie=${URLEncoder.encode(cookie, StandardCharsets.UTF_8)}".toApiUrl())
+    fun getUserAccount(cookie: String): NeteaseCloudUserAccount {
+        return HttpUtils.get("/user/account".toApiUrl(cookie))
         { success, response, content, _ ->
             if (success) {
                 return@get accountAdapter.nonNull().fromJson(content!!)!!
@@ -129,20 +129,103 @@ object NeteaseCloud {
         }
     }
 
-    fun getUserId(cookie: String): Long {
-        return (getUserAccount(cookie).account["id"]!! as Double).toLong()
+    fun getUserId(cookie: String? = null, userAccount: NeteaseCloudUserAccount = getUserAccount(cookie!!)): Long {
+        return (userAccount.account["id"]!! as Double).toLong()
     }
 
-    fun getUserName(cookie: String): String {
-        return (getUserAccount(cookie).profile["nickname"]!! as String)
+    fun getUserName(cookie: String? = null, userAccount: NeteaseCloudUserAccount = getUserAccount(cookie!!)): String {
+        return (userAccount.profile["nickname"]!! as String)
     }
 
 }
 
-data class ApiResponse(val code: Int, val data: Map<String, String>?)
+object NeteaseCloudMusician {
+
+    fun getTasks(cookie: String): List<MusicianTask> {
+        val adapter = Constants.moshi.adapter(MusicianTaskApiResponse::class.java)
+        return HttpUtils.get("/musician/tasks".toApiUrl(cookie), null) {
+                success, _, content, cause ->
+            if (!success) {
+                throw cause!!
+            }
+            adapter.fromJson(content!!)!!.data
+        }
+    }
+
+    fun receiveTaskReward(cookie: String, userMissionId: Long, period: Int): Boolean {
+        return HttpUtils.get("/musician/cloudbean/obtain?id=$userMissionId&period=$period".toApiUrl(cookie), null) {
+                success, _, content, cause ->
+            if (!success) {
+                throw cause!!
+            }
+
+            val responseEntity = apiResponseAdapter.fromJson(content!!)!!
+            responseEntity.code == 200 && responseEntity.message.contentEquals("success", true)
+        }
+    }
+
+    fun signIn(cookie: String): Boolean {
+        return HttpUtils.get("/musician/sign".toApiUrl(cookie), null) {
+                success, _, content, cause ->
+            if (!success) {
+                throw cause!!
+            }
+
+            val responseEntity = apiResponseAdapter.fromJson(content!!)!!
+            responseEntity.code == 200 && responseEntity.message.contentEquals("success", true)
+        }
+    }
+
+    fun isCreator(cookie: String? = null,
+                  userAccount: NeteaseCloudUserAccount = NeteaseCloud.getUserAccount(cookie!!)): Boolean {
+        val type = (userAccount.profile["djStatus"] as Double).toInt()
+        return type != 0
+    }
+
+}
+
+data class ApiResponseEntity(val code: Int, val message: String?, val data: Map<String, String>?)
+
+data class ApiResponseWithoutEntity(val code: Int, val message: String?, val data: Any?)
+
+data class MusicianTaskApiResponse(
+    val code: Int,
+    val message: String,
+    val data: List<MusicianTask>
+)
 
 data class QrCodeLoginCheckResponse(val code: Int, val message: String, val cookie: String?)
 
 data class LoginQrCode(val loginUrl: String, val loginQrCodeBlob: String)
 
+/**
+ * 网易云帐号信息.
+ * <p> 严重提醒：如果是数值型数据, 到 Map 中就是 Double 类型, 错误转换将导致 ClassCastException
+ */
 data class NeteaseCloudUserAccount(val code: Int, val account: Map<String, Any?>, val profile: Map<String, Any?>)
+
+data class MusicianTask(
+    val userMissionId: Long?,
+    val missionId: Long,
+    val userId: Long,
+    val missionEntityId: Long,
+    val rewardId: Long,
+    val progressRate: Int,
+    val description: String,
+    val type: Int,
+    val tag: Int,
+    val actionType: Int,
+    val platform: Int,
+    val status: Int,
+    val button: String,
+    val sortValue: Int,
+    val startTime: Long,
+    val endTime: Long,
+    val extendInfo: String,
+    val updateTime: Long?,
+    val period: Int,
+    val targetCount: Int,
+    val rewardWorth: String,
+    val rewardType: Int,
+    val needToReceive: Int?
+)

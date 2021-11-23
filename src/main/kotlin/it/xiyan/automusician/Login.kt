@@ -30,22 +30,26 @@ object QrCodeLoginMonitor {
     private fun startLoginResultReportCoroutine(id: UUID): Job {
         val job =
             NeteaseCloud.waitForQrCodeLoginResultAsync(id) { success, code, message, cookie ->
-                try {
-                    logger.debug { "[$id] 成功获取登录结果, 正在处理中..." }
-                    var repeatLogin = false
-                    var userId: Long? = null
-                    var userNick: String? = null
-                    if (success) {
-                        val cookies = handleCookies(cookie!!)
-                        logger.debug { "登录成功, 正在录入数据库..." }
-                        userId = NeteaseCloud.getUserId(cookies)
-                        repeatLogin = NeteaseCloudUserPO.hasUser(userId)
-                        userNick = NeteaseCloud.getUserName(cookies)
-                        recordUserInfo(cookies)
+                logger.debug { "[$id] 成功获取登录结果, 正在处理中..." }
+                var repeatLogin = false
+                var userId: Long? = null
+                var userNick: String? = null
+                if (success) {
+                    val cookies = handleCookies(cookie!!)
+                    val userAccount = NeteaseCloud.getUserAccount(cookie)
+                    userId = NeteaseCloud.getUserId(userAccount = userAccount)
+                    repeatLogin = NeteaseCloudUserPO.hasUser(userId)
+                    userNick = NeteaseCloud.getUserName(userAccount = userAccount)
+                    logger.debug {
+                        "登录成功, 正在录入数据库, 登录用户 $userNick($userId), " +
+                                "创作者: ${NeteaseCloudMusician.isCreator(userAccount = userAccount)}"
                     }
+                    recordUserInfo(cookies)
+                }
 
-                    val sessions = sessionMap[id]
-                    CoroutineScope(Dispatchers.IO).launch {
+                val sessions = sessionMap[id]
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
                         logger.debug { "[$id] 正在将登录状况回报给客户端..." }
                         val responseBody = """
                             {
@@ -63,18 +67,20 @@ object QrCodeLoginMonitor {
                                 logger.debug { "会话已失效, 跳过发送." }
                                 continue
                             }
+                            logger.debug { "会话有效, 正在发送中..." }
                             session.outgoing.send(Frame.Text(responseBody))
+                            logger.debug { "发送完成." }
                         }
                         logger.debug { "[$id] 回报完成." }
-                    }
-                } finally {
-                    if (code !in 801..802) {
-                        loginIdSet.remove(id)
-                        CoroutineScope(Dispatchers.IO).launch {
-                            for (session in sessionMap[id]) {
-                                session.close()
+                    } finally {
+                        if (code !in 801..802) {
+                            loginIdSet.remove(id)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                for (session in sessionMap[id]) {
+                                    session.close()
+                                }
+                                sessionMap.remove(id)
                             }
-                            sessionMap.remove(id)
                         }
                     }
                 }
