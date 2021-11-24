@@ -148,7 +148,7 @@ object NeteaseCloudMusician {
             if (!success) {
                 throw cause!!
             }
-            adapter.fromJson(content!!)!!.data
+            adapter.fromJson(content!!)!!.data["list"]!!
         }
     }
 
@@ -191,7 +191,7 @@ data class ApiResponseWithoutEntity(val code: Int, val message: String?, val dat
 data class MusicianTaskApiResponse(
     val code: Int,
     val message: String,
-    val data: List<MusicianTask>
+    val data: Map<String, List<MusicianTask>>
 )
 
 data class QrCodeLoginCheckResponse(val code: Int, val message: String, val cookie: String?)
