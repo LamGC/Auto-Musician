@@ -10,20 +10,25 @@ import com.cronutils.model.time.ExecutionTime
 import com.cronutils.parser.CronParser
 import mu.KotlinLogging
 import org.ktorm.entity.forEach
+import java.text.SimpleDateFormat
 import java.time.ZonedDateTime
+import java.util.*
 import java.util.concurrent.*
 
 private val logger = KotlinLogging.logger { }
 
 object TaskManager {
-
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH-mm-ss:SSS")
     private val triggerMap: MutableMap<Task, TaskTrigger> = ConcurrentHashMap()
     private val lastFutureMap: MutableMap<Task, ScheduledFuture<*>> = ConcurrentHashMap()
 
     fun registerTask(task: Task, trigger: TaskTrigger) {
         triggerMap[task] = trigger
-        scheduleTask(task)
-        logger.debug { "已注册任务 $task" }
+        val nextExecuteTime = scheduleTask(task)
+        logger.debug {
+            "已注册任务 $task, 下一次执行时间: " +
+                    dateFormat.format(Date(System.currentTimeMillis() + nextExecuteTime))
+        }
     }
 
     @Suppress("MemberVisibilityCanBePrivate")
@@ -31,14 +36,15 @@ object TaskManager {
         triggerMap.remove(task)
     }
 
-    internal fun scheduleTask(task: Task) {
+    internal fun scheduleTask(task: Task): Long {
         val trigger = triggerMap[task]!!
         val nextExecuteTime = trigger.nextExecuteTime()
         if (nextExecuteTime < 0) {
             unregisterTask(task)
-            return
+            return nextExecuteTime
         }
         lastFutureMap[task] = ScheduledTaskExecutor.execute(task, nextExecuteTime)
+        return nextExecuteTime
     }
 
 }
