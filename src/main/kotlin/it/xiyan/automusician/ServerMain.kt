@@ -13,12 +13,24 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.html.*
 import mu.KotlinLogging
 import java.time.Duration
+import kotlin.system.exitProcess
 
 private val logger = KotlinLogging.logger {  }
 
+fun initial() {
+    if (!Constants.FILE_SERVER_PROPERTIES.exists()) {
+        initialConfigFile()
+        println("The configuration file has been initialized. Please restart the server after configuration." +
+                "(Path: ${Constants.FILE_SERVER_PROPERTIES.canonicalPath})")
+        exitProcess(1)
+    }
+    initialDatabase()
+    initialTasks()
+}
+
 fun main(): Unit = runBlocking {
     logger.info { "The automatic musician is getting up..." }
-    initialDatabase()
+    initial()
     embeddedServer(Netty, port = Constants.serverProp.httpPort, host = Constants.serverProp.bindAddress) {
         install(WebSockets) {
             pingPeriod = Duration.ofSeconds(15)
