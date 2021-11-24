@@ -84,16 +84,26 @@ object NeteaseCloud {
         val job = CoroutineScope(Dispatchers.IO).launch {
             val qrAdapter = Constants.moshi.adapter(QrCodeLoginCheckResponse::class.java)!!
             val counter = AtomicInteger()
+            var errorCount = 0
             while (isActive) {
                 logger.debug { "[$id] 第 ${counter.incrementAndGet()} 次轮询." }
-                val apiResponse = HttpUtils.get(url = "/login/qr/check?key=$id".toApiUrl(),
-                    action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
-                        if (!success) {
-                            throw cause!!
-                        } else {
-                            qrAdapter.fromJson(content!!)!!
-                        }
-                    })
+                var apiResponse: QrCodeLoginCheckResponse
+                try {
+                    apiResponse = HttpUtils.get(url = "/login/qr/check?key=$id".toApiUrl(),
+                        action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
+                            if (!success) {
+                                throw cause!!
+                            } else {
+                                qrAdapter.fromJson(content!!)!!
+                            }
+                        })
+                } catch (e: IOException) {
+                    logger.error(e) { "轮询扫码结果时发生异常." }
+                    if (++errorCount > 5) {
+                        logger.warn { "[$id] 由于错误次数过多, 轮询终止." }
+                    }
+                    continue
+                }
                 logger.debug { "[$id] 轮询结果: $apiResponse" }
                 if (apiResponse.code != 801) {
                     // 将实际操作切换回默认线程池
