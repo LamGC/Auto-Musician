@@ -16,7 +16,7 @@ repositories {
 dependencies {
     // Logging
     implementation("io.github.microutils:kotlin-logging:2.0.11")
-    implementation("ch.qos.logback:logback-classic:1.2.6")
+    implementation("ch.qos.logback:logback-classic:1.2.7")
 
     //implementation("com.squareup.okhttp3:okhttp:4.9.2")
     implementation("org.apache.httpcomponents.client5:httpclient5:5.1.1")
@@ -29,6 +29,8 @@ dependencies {
 
     implementation("org.ktorm:ktorm-core:3.4.1")
     runtimeOnly("mysql:mysql-connector-java:8.0.27")
+
+    implementation("com.cronutils:cron-utils:9.1.6")
 
     // Test
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.5.31")
