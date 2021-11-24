@@ -84,14 +84,15 @@ interface TaskTrigger {
 
 }
 
-class CronTrigger(cronExpression: String): TaskTrigger {
+class CronTrigger(cron: Cron): TaskTrigger {
 
     companion object {
         val cronDefinition: CronDefinition = CronDefinitionBuilder.instanceDefinitionFor(CronType.SPRING)
         val cronParser = CronParser(cronDefinition)
     }
 
-    private val cron: Cron = cronParser.parse(cronExpression)
+    constructor(cronExpression: String) : this(cronParser.parse(cronExpression))
+
     private val executeTime: ExecutionTime = ExecutionTime.forCron(cron)
 
     init {
