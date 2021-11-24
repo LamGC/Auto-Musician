@@ -50,7 +50,7 @@ data class ServerProperties(
     val bindAddress: String = "0.0.0.0",
     val httpPort: Int = 8080,
     val database: DatabaseConnectConfig = DatabaseConnectConfig(),
-    val httpProxy: HttpProxy? = null
+    val httpProxy: HttpProxy = HttpProxy()
 ) {
     companion object {
         val DEFAULT = ServerProperties()
@@ -64,4 +64,4 @@ data class DatabaseConnectConfig(
     val password: String? = ""
 )
 
-data class HttpProxy(val host: String = "127.0.0.1", val port: Int = 1080)
+data class HttpProxy(val enable: Boolean = false, val host: String = "127.0.0.1", val port: Int = 1080)
