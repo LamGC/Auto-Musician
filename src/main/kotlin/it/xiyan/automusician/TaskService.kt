@@ -4,6 +4,7 @@ package it.xiyan.automusician
 
 import com.cronutils.model.Cron
 import com.cronutils.model.CronType
+import com.cronutils.model.definition.CronDefinition
 import com.cronutils.model.definition.CronDefinitionBuilder
 import com.cronutils.model.time.ExecutionTime
 import com.cronutils.parser.CronParser
@@ -86,7 +87,8 @@ interface TaskTrigger {
 class CronTrigger(cronExpression: String): TaskTrigger {
 
     companion object {
-        val cronParser = CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.SPRING))
+        val cronDefinition: CronDefinition = CronDefinitionBuilder.instanceDefinitionFor(CronType.SPRING)
+        val cronParser = CronParser(cronDefinition)
     }
 
     private val cron: Cron = cronParser.parse(cronExpression)
