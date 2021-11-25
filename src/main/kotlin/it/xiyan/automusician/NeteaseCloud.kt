@@ -43,7 +43,7 @@ internal fun String.toApiUrl(cookie: String? = null): String {
     } + if (cookie != null) "&cookie=${URLEncoder.encode(cookie, StandardCharsets.UTF_8)}" else ""
 }
 
-private val apiResponseAdapter = Constants.moshi.adapter(ApiResponseEntity::class.java)!!
+private val apiResponseAdapter = Constants.moshi.adapter(ApiResponseEntityMap::class.java)!!
 
 object NeteaseCloud {
 
@@ -181,20 +181,26 @@ object NeteaseCloudMusician {
                 throw cause!!
             }
 
-            val responseEntity = apiResponseAdapter.fromJson(content!!)!!
-            responseEntity.code == 200 && responseEntity.message.contentEquals("success", true)
+            val responseEntity = Constants.moshi.adapter(ApiResponseEntity::class.java).fromJson(content!!)!!
+            responseEntity.code == 200 &&
+                    responseEntity.message.contentEquals("success", true) &&
+                    (responseEntity.data as Boolean)
         }
     }
 
-    fun isCreator(cookie: String? = null,
-                  userAccount: NeteaseCloudUserAccount = NeteaseCloud.getUserAccount(cookie!!)): Boolean {
+    fun isCreator(
+        cookie: String? = null,
+        userAccount: NeteaseCloudUserAccount = NeteaseCloud.getUserAccount(cookie!!)
+    ): Boolean {
         val type = (userAccount.profile["djStatus"] as Double).toInt()
         return type != 0
     }
 
 }
 
-data class ApiResponseEntity(val code: Int, val message: String?, val data: Map<String, String>?)
+data class ApiResponseEntityMap(val code: Int, val message: String?, val data: Map<String, String>?)
+
+data class ApiResponseEntity(val code: Int, val message: String?, val data: Any?)
 
 data class ApiResponseWithoutEntity(val code: Int, val message: String?, val data: Any?)
 
