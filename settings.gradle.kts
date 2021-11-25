@@ -1,3 +1,3 @@
 
-rootProject.name = "Musician-Auto-Check-Web"
+rootProject.name = "Auto-Musician"
 
