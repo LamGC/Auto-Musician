@@ -43,7 +43,9 @@ internal fun String.toApiUrl(cookie: String? = null): String {
     } + if (cookie != null) "&cookie=${URLEncoder.encode(cookie, StandardCharsets.UTF_8)}" else ""
 }
 
-private val apiResponseAdapter = Constants.moshi.adapter(ApiResponseEntityMap::class.java)!!
+private val apiResponseEntityMapAdapter = Constants.moshi.adapter(ApiResponseEntityMap::class.java)!!
+private val apiResponseWithoutEntityAdapter = Constants.moshi.adapter(ApiResponseWithoutEntity::class.java)!!
+private val qrAdapter = Constants.moshi.adapter(QrCodeLoginCheckResponse::class.java)!!
 
 object NeteaseCloud {
 
@@ -53,13 +55,15 @@ object NeteaseCloud {
      * @return 返回新 Qr 码 Id, 注意这不是用于 QR 码链接的 Id.
      */
     fun createLoginQrCodeId(): UUID {
-        return UUID.fromString(HttpUtils.get(url = "/login/qr/key".toApiUrl(),
+        return UUID.fromString(
+            HttpUtils.get(
+                url = "/login/qr/key".toApiUrl(),
             action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
                 logger.debug { "Response: $content" }
                 if (!success) {
                     throw cause!!
                 } else {
-                    return@get apiResponseAdapter.fromJson(content!!)!!.data!!["unikey"]!!
+                    return@get apiResponseEntityMapAdapter.fromJson(content!!)!!.data!!["unikey"]!!
                 }
             }))
     }
@@ -74,7 +78,7 @@ object NeteaseCloud {
                 if (!success) {
                     throw cause!!
                 } else {
-                    val response = apiResponseAdapter.fromJson(content!!)!!
+                    val response = apiResponseEntityMapAdapter.fromJson(content!!)!!
                     return@get LoginQrCode(response.data!!["qrurl"]!!, response.data["qrimg"]!!)
                 }
             })
@@ -82,7 +86,6 @@ object NeteaseCloud {
 
     fun waitForQrCodeLoginResultAsync(id: UUID, action: (success: Boolean, code: Int, message: String, cookie: String?) -> Unit): Job {
         val job = CoroutineScope(Dispatchers.IO).launch {
-            val qrAdapter = Constants.moshi.adapter(QrCodeLoginCheckResponse::class.java)!!
             val counter = AtomicInteger()
             var errorCount = 0
             while (isActive) {
@@ -122,7 +125,8 @@ object NeteaseCloud {
 
     fun logout(cookie: String): Boolean {
         return HttpUtils.get("/logout".toApiUrl(), cookie) { success, response, content, _ ->
-            success && (response?.notError() ?: false) && apiResponseAdapter.fromJson(content!!)?.code == 200
+            success && (response?.notError()
+                ?: false) && apiResponseWithoutEntityAdapter.fromJson(content!!)?.code == 200
         }
     }
 
@@ -151,14 +155,15 @@ object NeteaseCloud {
 
 object NeteaseCloudMusician {
 
+    private val taskAdapter = Constants.moshi.adapter(MusicianTaskApiResponse::class.java)
+    private val apiResponseEntityAdapter = Constants.moshi.adapter(ApiResponseEntity::class.java)
+
     fun getTasks(cookie: String): List<MusicianTask> {
-        val adapter = Constants.moshi.adapter(MusicianTaskApiResponse::class.java)
-        return HttpUtils.get("/musician/tasks".toApiUrl(cookie), null) {
-                success, _, content, cause ->
+        return HttpUtils.get("/musician/tasks".toApiUrl(cookie), null) { success, _, content, cause ->
             if (!success) {
                 throw cause!!
             }
-            adapter.fromJson(content!!)!!.data["list"]!!
+            taskAdapter.fromJson(content!!)!!.data["list"]!!
         }
     }
 
@@ -169,7 +174,7 @@ object NeteaseCloudMusician {
                 throw cause!!
             }
 
-            val responseEntity = apiResponseAdapter.fromJson(content!!)!!
+            val responseEntity = apiResponseEntityMapAdapter.fromJson(content!!)!!
             responseEntity.code == 200 && responseEntity.message.contentEquals("success", true)
         }
     }
@@ -181,7 +186,7 @@ object NeteaseCloudMusician {
                 throw cause!!
             }
 
-            val responseEntity = Constants.moshi.adapter(ApiResponseEntity::class.java).fromJson(content!!)!!
+            val responseEntity = apiResponseEntityAdapter.fromJson(content!!)!!
             responseEntity.code == 200 &&
                     responseEntity.message.contentEquals("success", true) &&
                     (responseEntity.data as Boolean)
@@ -202,7 +207,7 @@ data class ApiResponseEntityMap(val code: Int, val message: String?, val data: M
 
 data class ApiResponseEntity(val code: Int, val message: String?, val data: Any?)
 
-data class ApiResponseWithoutEntity(val code: Int, val message: String?, val data: Any?)
+data class ApiResponseWithoutEntity(val code: Int, val message: String?)
 
 data class MusicianTaskApiResponse(
     val code: Int,
