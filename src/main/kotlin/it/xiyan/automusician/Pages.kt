@@ -1,10 +1,9 @@
 package it.xiyan.automusician
 
-import io.ktor.html.*
 import kotlinx.html.*
 import mu.KotlinLogging
 
-private val logger = KotlinLogging.logger {  }
+private val logger = KotlinLogging.logger { }
 
 fun HTML.index() {
     head {
@@ -50,10 +49,10 @@ fun HTML.loginPage() {
                 }
                 
                 .loginResult {
+                    font-size: 18px;
                     width: 40%;
-                    height: 30px;
+                    height: 70px;
                     border: 1px solid black;
-                    border-radius: 5%;
                     margin-left: 29.5%;
                     margin-right: 29.5%;
                 }
@@ -67,10 +66,10 @@ fun HTML.loginPage() {
 
     body(classes = "center") {
         +"扫描下方二维码，登录网易云"
-        br ()
-        img (src = NeteaseCloud.getLoginQrCode(loginUUID).loginQrCodeBlob, alt = "Login Qr Code")
-        div(classes = "center loginResult") {
-
+        br()
+        img(src = NeteaseCloud.getLoginQrCode(loginUUID).loginQrCodeBlob, alt = "Login Qr Code")
+        textArea(classes = "center loginResult") {
+            attributes["readonly"] = "readonly"
         }
         button(classes = "center") {
             attributes["onclick"] = "location.reload();"
@@ -87,8 +86,20 @@ fun HTML.loginPage() {
                         location.host + "/api/login/check?id=" + loginInfo["loginId"]);
                     let resultShower = document.getElementsByClassName("loginResult")[0];
                     loginResultWs.onmessage = function (event) {
-                        console.debug ("收到回复", event.data)
-                        resultShower.innerHTML = JSON.parse(event.data).message
+                        console.debug ("收到回复", event.data);
+                        let response = JSON.parse(event.data);
+                        if (response["confirm"] === true) {
+                            resultShower.innerHTML = "等待扫码";
+                            return;
+                        }
+                        if (response["success"] === true) {
+                            resultShower.innerHTML = "登录成功！网易云用户：" + response["userName"] +
+                                "(" + response["userId"] + ")，" + (response["repeatLogin"] === true ? 
+                                "该帐号已成功更新登录信息(如旧的登录凭证仍然有效, 将自动登出以销毁凭证)" :
+                            "该帐号在本站为首次登录.")
+                        } else {
+                            resultShower.innerHTML = response["message"];
+                        }
                     }
                     loginResultWs.onclose = function () {console.warn ("回报连接已关闭.")}
                     loginResultWs.onerror = function () { console.error ("发生错误", arguments)}
@@ -97,21 +108,3 @@ fun HTML.loginPage() {
         }
     }
 }
-
-class NeteaseCloudLogin: Template<HTML> {
-    val qrCodeImg = Placeholder<FlowContent>()
-    override fun HTML.apply() {
-        head {
-
-        }
-
-        body {
-            insert(qrCodeImg)
-        }
-    }
-}
-
-
-
-
-
