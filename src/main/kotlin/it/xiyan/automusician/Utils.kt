@@ -3,6 +3,7 @@ package it.xiyan.automusician
 import io.ktor.http.*
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.classic.methods.HttpPost
+import org.apache.hc.client5.http.config.RequestConfig
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder
 import org.apache.hc.core5.http.HttpEntity
 import org.apache.hc.core5.http.HttpHost
@@ -12,6 +13,7 @@ import org.apache.hc.core5.http.io.entity.StringEntity
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 class HashcodeSet<T>(private val map: MutableMap<Int, T>, override val size: Int = map.size) : MutableSet<T> {
 
@@ -61,6 +63,12 @@ object HttpUtils {
     private val client = HttpClientBuilder.create()
         .disableCookieManagement()
         .disableAuthCaching()
+        .setDefaultRequestConfig(RequestConfig.custom()
+            .setConnectTimeout(15, TimeUnit.SECONDS)
+            .setResponseTimeout(45, TimeUnit.SECONDS)
+            .setProxy(if (Constants.serverProp.httpProxy.enable)
+                Constants.serverProp.httpProxy.let { HttpHost(it.host, it.port) } else null)
+            .build())
         .setProxy(if (Constants.serverProp.httpProxy.enable)
             Constants.serverProp.httpProxy.let { HttpHost(it.host, it.port) } else null)
         .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36")
