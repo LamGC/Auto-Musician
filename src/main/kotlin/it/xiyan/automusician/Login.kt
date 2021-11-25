@@ -50,7 +50,7 @@ object QrCodeLoginMonitor {
                 }
 
                 val sessions = sessionMap[id]
-                CoroutineScope(Dispatchers.IO).launch {
+                runBlocking(Dispatchers.IO) {
                     try {
                         logger.debug { "[$id] 正在将登录状况回报给客户端..." }
                         val responseBody = """
