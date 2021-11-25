@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "it.xiyan"
-version = "0.0.1"
+version = "1.0.0-rc1"
 
 repositories {
     mavenCentral()
