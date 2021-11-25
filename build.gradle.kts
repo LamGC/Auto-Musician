@@ -5,8 +5,8 @@ plugins {
     application
 }
 
-group = "it.xiyan"
-version = "1.0.0-rc1"
+group = "net.lamgc"
+version = "1.0.0-rc2"
 
 repositories {
     mavenCentral()
