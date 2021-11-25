@@ -54,7 +54,7 @@ fun initialTasks() {
             CronBuilder.cron(CronType.SPRING.toDefinition())
                 .withSecond(on(0))
                 .withMinute(on(0))
-                .withHour(on(6).and(every(3)))
+                .withHour(every(3))
                 .withDoM(always())
                 .withMonth(always())
                 .instance()
