@@ -1,16 +1,16 @@
 package it.xiyan.automusician
 
 import io.ktor.application.*
-import io.ktor.html.respondHtml
+import io.ktor.html.*
 import io.ktor.http.*
 import io.ktor.http.cio.websocket.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.html.*
+import kotlinx.html.HTML
 import mu.KotlinLogging
 import java.time.Duration
 import kotlin.system.exitProcess
@@ -33,7 +33,7 @@ fun main(): Unit = runBlocking {
     initial()
     embeddedServer(Netty, port = Constants.serverProp.httpPort, host = Constants.serverProp.bindAddress) {
         install(WebSockets) {
-            pingPeriod = Duration.ofSeconds(15)
+            pingPeriod = Duration.ofSeconds(6)
             timeout = Duration.ofSeconds(15)
             maxFrameSize = Short.MAX_VALUE.toLong()
         }
