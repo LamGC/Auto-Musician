@@ -4,6 +4,8 @@ import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*
 import mu.KotlinLogging
 import org.ktorm.entity.add
+import org.ktorm.entity.update
+import java.io.IOException
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -91,19 +93,31 @@ object QrCodeLoginMonitor {
 
     private fun recordUserInfo(cookie: String): NeteaseCloudUser {
         val userId = NeteaseCloud.getUserId(cookie)
-        val findUser = NeteaseCloudUserPO.getUserById(userId)
-        if (findUser != null) {
-            logger.debug { "用户已存在, 跳过添加." }
-            return findUser
-        }
-
         val user = NeteaseCloudUser {
             uid = userId
             cookies = cookie
             loginDate = LocalDateTime.now()
         }
-        logger.debug { "用户不存在, 正在添加到数据库..." }
-        database.NeteaseCloudUserPO.add(user)
+        val findUser = NeteaseCloudUserPO.getUserById(userId)
+        if (findUser != null) {
+            logger.debug { "用户 $userId 已存在, 正在更新登录凭证..." }
+            logger.debug { "用户 $userId 正在销毁旧登录凭证..." }
+            try {
+                if (NeteaseCloud.logout(findUser.cookies)) {
+                    logger.debug { "用户 $userId 已成功销毁旧登录凭证." }
+                } else {
+                    logger.debug { "用户 $userId 销毁旧登录凭证失败, 凭证可能已失效." }
+                }
+
+            } catch (e: IOException) {
+                logger.error(e) { "用户 ${findUser.uid} 登出旧凭证时发生异常." }
+            }
+            database.NeteaseCloudUserPO.update(user)
+            logger.debug { "用户 $userId 凭证已更新." }
+        } else {
+            logger.debug { "用户不存在, 正在添加到数据库..." }
+            database.NeteaseCloudUserPO.add(user)
+        }
         return user
     }
 
