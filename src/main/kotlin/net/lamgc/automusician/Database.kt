@@ -20,17 +20,17 @@ val database
 
 object AppDatabase {
     val database = Database.Companion.connect(
-        url = "jdbc:mysql://${Constants.serverProp.database.address}/${Constants.serverProp.database.databaseName}",
-        user = Constants.serverProp.database.user,
-        password = Constants.serverProp.database.password,
+        url = "jdbc:mysql://${Constants.config.database.address}/${Constants.config.database.databaseName}",
+        user = Constants.config.database.user,
+        password = Constants.config.database.password,
         generateSqlInUpperCase = true
     )
 }
 
 fun initialDatabase() {
     val jdbcUrl = "jdbc:mysql://" +
-            "${Constants.serverProp.database.address}/${Constants.serverProp.database.databaseName}?" +
-            "user=${Constants.serverProp.database.user}&password=${Constants.serverProp.database.password}"
+            "${Constants.config.database.address}/${Constants.config.database.databaseName}?" +
+            "user=${Constants.config.database.user}&password=${Constants.config.database.password}"
     if (!checkDatabaseConnectivity(jdbcUrl)) {
         exitProcess(1)
     }

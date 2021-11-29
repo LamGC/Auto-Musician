@@ -14,38 +14,41 @@ object Constants {
     val moshi: Moshi = Moshi.Builder()
         .addLast(KotlinJsonAdapterFactory())
         .build()
-    val serverProp = loadServerProperties()
+    val config = loadServerConfig()
 }
 
-private val adapter = Constants.moshi.adapter(ServerProperties::class.javaObjectType)
+private val adapter = Constants.moshi.adapter(ServerConfig::class.java)
     .serializeNulls()
 
-fun loadServerProperties(): ServerProperties {
+fun loadServerConfig(): ServerConfig {
     return if (!Constants.FILE_SERVER_PROPERTIES.exists()) {
         logger.warn { "The configuration file does not exist. Run the server with the default configuration." }
-        ServerProperties.DEFAULT
+        ServerConfig.DEFAULT
     } else {
         try {
-            val properties = (adapter.fromJson(Constants.FILE_SERVER_PROPERTIES.readText(StandardCharsets.UTF_8)) ?: ServerProperties.DEFAULT)
-            if (properties == ServerProperties.DEFAULT) {
+            val properties = (adapter.fromJson(Constants.FILE_SERVER_PROPERTIES.readText(StandardCharsets.UTF_8))
+                ?: ServerConfig.DEFAULT)
+            if (properties == ServerConfig.DEFAULT) {
                 logger.warn { "The configuration file is empty. Use the default configuration file to run the server." }
             } else {
-                logger.info { "Successfully loaded configuration file. " +
-                        "(Path: ${Constants.FILE_SERVER_PROPERTIES.canonicalPath})" }
+                logger.info {
+                    "Successfully loaded configuration file. " +
+                            "(Path: ${Constants.FILE_SERVER_PROPERTIES.canonicalPath})"
+                }
             }
             properties
         } catch (e: IOException) {
             logger.error(e) { "An error occurred while loading the configuration file." }
-            ServerProperties.DEFAULT
+            ServerConfig.DEFAULT
         }
     }
 }
 
-fun initialConfigFile(configFile: File = Constants.FILE_SERVER_PROPERTIES) {
-    configFile.writeText(adapter.toJson(ServerProperties.DEFAULT), StandardCharsets.UTF_8)
+fun writeDefaultConfigFile(configFile: File = Constants.FILE_SERVER_PROPERTIES) {
+    configFile.writeText(adapter.toJson(ServerConfig.DEFAULT), StandardCharsets.UTF_8)
 }
 
-data class ServerProperties(
+data class ServerConfig(
     val apiServer: String = "https://netease-cloud-music-api-binaryify.vercel.app/",
     val bindAddress: String = "0.0.0.0",
     val httpPort: Int = 8080,
@@ -53,7 +56,7 @@ data class ServerProperties(
     val httpProxy: HttpProxy = HttpProxy()
 ) {
     companion object {
-        val DEFAULT = ServerProperties()
+        val DEFAULT = ServerConfig()
     }
 }
 

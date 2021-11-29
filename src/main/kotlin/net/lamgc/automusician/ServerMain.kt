@@ -15,7 +15,7 @@ private val logger = KotlinLogging.logger {  }
 
 fun initial() {
     if (!Constants.FILE_SERVER_PROPERTIES.exists()) {
-        initialConfigFile()
+        writeDefaultConfigFile()
         println(
             "The configuration file has been initialized. Please restart the server after configuration." +
                     "(Path: ${Constants.FILE_SERVER_PROPERTIES.canonicalPath})"
@@ -37,13 +37,15 @@ fun Application.modules() {
 fun main(): Unit = runBlocking {
     logger.info { "The automatic musician is getting up..." }
     initial()
-    embeddedServer(Netty, port = Constants.serverProp.httpPort, host = Constants.serverProp.bindAddress) {
+    embeddedServer(Netty, port = Constants.config.httpPort, host = Constants.config.bindAddress) {
         modules()
         routing {
             pages()
             api()
         }
     }.start(wait = false)
-    logger.info { "The automatic musician is awake! He's working now! " +
-            "(Here: http://${Constants.serverProp.bindAddress}:${Constants.serverProp.httpPort})" }
+    logger.info {
+        "The automatic musician is awake! He's working now! " +
+                "(Here: http://${Constants.config.bindAddress}:${Constants.config.httpPort})"
+    }
 }

@@ -23,16 +23,16 @@ interface NeteaseCloudUser: Entity<NeteaseCloudUser> {
 
 internal fun String.toApiUrl(cookie: String? = null): String {
     val apiUrl = if (this.startsWith("/")) {
-        if (Constants.serverProp.apiServer.endsWith("/")) {
-            Constants.serverProp.apiServer + this.substring(1)
+        if (Constants.config.apiServer.endsWith("/")) {
+            Constants.config.apiServer + this.substring(1)
         } else {
-            Constants.serverProp.apiServer + this
+            Constants.config.apiServer + this
         }
     } else {
-        if (Constants.serverProp.apiServer.endsWith("/")) {
-            Constants.serverProp.apiServer + this
+        if (Constants.config.apiServer.endsWith("/")) {
+            Constants.config.apiServer + this
         } else {
-            "${Constants.serverProp.apiServer}/$this"
+            "${Constants.config.apiServer}/$this"
         }
     }
 
