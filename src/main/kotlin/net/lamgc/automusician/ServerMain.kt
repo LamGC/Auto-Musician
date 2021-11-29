@@ -8,22 +8,35 @@ import io.ktor.server.netty.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
+import java.io.File
 import java.time.Duration
 import kotlin.system.exitProcess
 
 private val logger = KotlinLogging.logger {  }
 
-fun initial() {
-    if (!Constants.FILE_SERVER_PROPERTIES.exists()) {
+fun initial(args: Array<String>) {
+    processArguments(args)
+    if (!Constants.FILE_SERVER_CONFIG.exists()) {
         writeDefaultConfigFile()
         println(
             "The configuration file has been initialized. Please restart the server after configuration." +
-                    "(Path: ${Constants.FILE_SERVER_PROPERTIES.canonicalPath})"
+                    "(Path: ${Constants.FILE_SERVER_CONFIG.canonicalPath})"
         )
         exitProcess(1)
     }
     initialDatabase()
     initialTasks()
+}
+
+fun processArguments(args: Array<String>) {
+    if (args.isNotEmpty()) {
+        val configFile = File(args[0])
+        if (configFile.exists() and configFile.isFile) {
+            val path = configFile.canonicalPath
+            AppProperties.setProperty(PropertyNames.FILE_CONFIG.name, path)
+            logger.info { "The specified profile path is `${path}`." }
+        }
+    }
 }
 
 fun Application.modules() {
@@ -34,9 +47,9 @@ fun Application.modules() {
     }
 }
 
-fun main(): Unit = runBlocking {
+fun main(args: Array<String>): Unit = runBlocking {
     logger.info { "The automatic musician is getting up..." }
-    initial()
+    initial(args)
     embeddedServer(Netty, port = Constants.config.httpPort, host = Constants.config.bindAddress) {
         modules()
         routing {

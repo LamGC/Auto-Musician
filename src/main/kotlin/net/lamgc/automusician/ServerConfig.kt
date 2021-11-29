@@ -6,11 +6,14 @@ import mu.KotlinLogging
 import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.util.*
 
 private val logger = KotlinLogging.logger {  }
 
 object Constants {
-    val FILE_SERVER_PROPERTIES = File("./config.json")
+    private const val PATH_SERVER_CONFIG = "./config.json"
+    val FILE_SERVER_CONFIG: File
+        get() = File(AppProperties.getProperty(PropertyNames.FILE_CONFIG, PATH_SERVER_CONFIG))
     val moshi: Moshi = Moshi.Builder()
         .addLast(KotlinJsonAdapterFactory())
         .build()
@@ -20,20 +23,20 @@ object Constants {
 private val adapter = Constants.moshi.adapter(ServerConfig::class.java)
     .serializeNulls()
 
-fun loadServerConfig(): ServerConfig {
-    return if (!Constants.FILE_SERVER_PROPERTIES.exists()) {
+fun loadServerConfig(configFile: File = Constants.FILE_SERVER_CONFIG): ServerConfig {
+    return if (!configFile.exists()) {
         logger.warn { "The configuration file does not exist. Run the server with the default configuration." }
         ServerConfig.DEFAULT
     } else {
         try {
-            val properties = (adapter.fromJson(Constants.FILE_SERVER_PROPERTIES.readText(StandardCharsets.UTF_8))
+            val properties = (adapter.fromJson(configFile.readText(StandardCharsets.UTF_8))
                 ?: ServerConfig.DEFAULT)
             if (properties == ServerConfig.DEFAULT) {
                 logger.warn { "The configuration file is empty. Use the default configuration file to run the server." }
             } else {
                 logger.info {
                     "Successfully loaded configuration file. " +
-                            "(Path: ${Constants.FILE_SERVER_PROPERTIES.canonicalPath})"
+                            "(Path: ${configFile.canonicalPath})"
                 }
             }
             properties
@@ -44,7 +47,15 @@ fun loadServerConfig(): ServerConfig {
     }
 }
 
-fun writeDefaultConfigFile(configFile: File = Constants.FILE_SERVER_PROPERTIES) {
+val AppProperties = Properties()
+fun Properties.getProperty(property: PropertyNames, default: String): String =
+    this.getProperty(property.name, default)
+
+enum class PropertyNames {
+    FILE_CONFIG
+}
+
+fun writeDefaultConfigFile(configFile: File = Constants.FILE_SERVER_CONFIG) {
     configFile.writeText(adapter.toJson(ServerConfig.DEFAULT), StandardCharsets.UTF_8)
 }
 
