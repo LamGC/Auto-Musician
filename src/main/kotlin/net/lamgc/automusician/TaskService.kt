@@ -1,6 +1,4 @@
-
-
-package it.xiyan.automusician
+package net.lamgc.automusician
 
 import com.cronutils.model.Cron
 import com.cronutils.model.CronType

@@ -1,4 +1,4 @@
-package it.xiyan.automusician
+package net.lamgc.automusician
 
 import kotlinx.coroutines.*
 import mu.KotlinLogging

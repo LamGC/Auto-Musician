@@ -1,9 +1,23 @@
-package it.xiyan.automusician
+package net.lamgc.automusician
 
+import io.ktor.application.*
+import io.ktor.html.*
+import io.ktor.http.*
+import io.ktor.routing.*
 import kotlinx.html.*
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger { }
+
+fun Routing.pages() {
+    get("/") {
+        call.respondHtml(HttpStatusCode.OK, HTML::index)
+    }
+
+    get("/qrlogin") {
+        call.respondHtml(HttpStatusCode.OK, HTML::loginPage)
+    }
+}
 
 fun HTML.index() {
     head {

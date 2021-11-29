@@ -1,4 +1,4 @@
-package it.xiyan.automusician
+package net.lamgc.automusician
 
 import mu.KotlinLogging
 import org.ktorm.database.Database
@@ -78,4 +78,4 @@ object NeteaseCloudUserPO : Table<NeteaseCloudUser>("musician_users") {
     fun hasUser(userId: Long): Boolean = getUserById(userId) != null
 }
 
-val Database.NeteaseCloudUserPO get() = this.sequenceOf(it.xiyan.automusician.NeteaseCloudUserPO)
+val Database.NeteaseCloudUserPO get() = this.sequenceOf(net.lamgc.automusician.NeteaseCloudUserPO)

@@ -1,4 +1,4 @@
-package it.xiyan.automusician
+package net.lamgc.automusician
 
 import com.cronutils.builder.CronBuilder
 import com.cronutils.model.CronType

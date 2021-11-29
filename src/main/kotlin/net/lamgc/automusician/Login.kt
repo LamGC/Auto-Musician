@@ -1,4 +1,4 @@
-package it.xiyan.automusician
+package net.lamgc.automusician
 
 import io.ktor.http.cio.websocket.*
 import kotlinx.coroutines.*

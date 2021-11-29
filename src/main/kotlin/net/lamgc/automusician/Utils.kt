@@ -1,4 +1,4 @@
-package it.xiyan.automusician
+package net.lamgc.automusician
 
 import io.ktor.http.*
 import org.apache.hc.client5.http.classic.methods.HttpGet

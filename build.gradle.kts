@@ -51,5 +51,5 @@ tasks.withType<KotlinCompile> {
 }
 
 application {
-    mainClass.set("it.xiyan.automusician.ServerMainKt")
+    mainClass.set("net.lamgc.automusician.ServerMainKt")
 }
