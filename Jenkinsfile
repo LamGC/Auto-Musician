@@ -1,6 +1,8 @@
 pipeline {
     agent {
-        label {}
+        node {
+            label 'lang:java && java:11'
+        }
     }
 
     stages {
