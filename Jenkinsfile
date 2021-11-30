@@ -21,7 +21,7 @@ pipeline {
                 echo 'Building..'
                 sh "./gradlew build"
                 echo 'Collection component...'
-                archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
+                archiveArtifacts artifacts: 'build/libs/*.jar'
                 echo 'Build succeed.'
             }
         }
