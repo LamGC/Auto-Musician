@@ -21,7 +21,7 @@ pipeline {
                 echo 'Building..'
                 sh "./gradlew build"
                 echo 'Collection component...'
-                archiveArtifacts artifacts: 'build/libs/*.jar'
+                archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
                 echo 'Build succeed.'
             }
         }
@@ -30,7 +30,7 @@ pipeline {
             steps {
                 echo 'Build distribution package..'
                 sh "./gradlew assembleDist"
-                archiveArtifacts artifacts: 'build/distributions/**'
+                archiveArtifacts artifacts: 'build/distributions/**', fingerprint: true
                 echo 'Distribution package build complete.'
             }
         }
