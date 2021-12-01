@@ -5,6 +5,10 @@ pipeline {
         }
     }
 
+    environment {
+        GRADLE_OPTS = '-Dorg.gradle.daemon=false'
+    }
+
     stages {
         stage('Initialize project...') {
             steps {
