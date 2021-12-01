@@ -26,16 +26,8 @@ pipeline {
                 sh "./gradlew build"
                 echo 'Collection component...'
                 archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
-                echo 'Build succeed.'
-            }
-        }
-
-        stage('build distribution') {
-            steps {
-                echo 'Build distribution package..'
-                sh "./gradlew assembleDist"
                 archiveArtifacts artifacts: 'build/distributions/**'
-                echo 'Distribution package build complete.'
+                echo 'Build succeed.'
             }
         }
     }
