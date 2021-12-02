@@ -52,7 +52,8 @@ tasks.withType<KotlinCompile> {
 
 application {
     mainClass.set("net.lamgc.automusician.ServerMainKt")
-    val workdir = File("./build/run")
+    val workdirPath = System.getenv("PROJECT_RUN_WORKDIR") ?: "./build/run"
+    val workdir = File(workdirPath)
     if (!workdir.exists()) {
         workdir.mkdirs()
     }
