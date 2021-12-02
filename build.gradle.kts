@@ -52,4 +52,10 @@ tasks.withType<KotlinCompile> {
 
 application {
     mainClass.set("net.lamgc.automusician.ServerMainKt")
+    val workdir = File("./build/run")
+    if (!workdir.exists()) {
+        workdir.mkdirs()
+    }
+    tasks["run"].setProperty("workingDir", workdir)
+
 }
