@@ -18,10 +18,7 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging:2.0.11")
     implementation("ch.qos.logback:logback-classic:1.2.7")
 
-    //implementation("com.squareup.okhttp3:okhttp:4.9.2")
     implementation("org.apache.httpcomponents.client5:httpclient5:5.1.1")
-
-    implementation("com.google.zxing:core:3.4.1")
 
     // Json
     implementation("com.squareup.moshi:moshi:1.12.0")
@@ -36,10 +33,11 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.5.31")
 
     // Ktor
-    implementation("io.ktor:ktor-server-netty:1.6.4")
-    implementation("io.ktor:ktor-html-builder:1.6.4")
+    val ktorVersion = "1.6.4"
+    implementation("io.ktor:ktor-server-netty:$ktorVersion")
+    implementation("io.ktor:ktor-html-builder:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3")
-    implementation("io.ktor:ktor-websockets:1.6.4")
+    implementation("io.ktor:ktor-websockets:$ktorVersion")
 }
 
 tasks.test {
