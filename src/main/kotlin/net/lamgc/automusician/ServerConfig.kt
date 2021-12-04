@@ -15,7 +15,6 @@ object Const {
     val FILE_SERVER_CONFIG: File
         get() = File(AppProperties.getProperty(PropertyNames.FILE_CONFIG, PATH_SERVER_CONFIG))
     val gson: Gson = GsonBuilder()
-        .generateNonExecutableJson()
         .serializeNulls()
         .setPrettyPrinting()
         .create()
