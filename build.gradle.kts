@@ -32,7 +32,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.5.31")
 
     // Ktor
-    val ktorVersion = "1.6.4"
+    val ktorVersion = "1.6.6"
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-html-builder:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3")
