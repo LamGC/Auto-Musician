@@ -1,7 +1,7 @@
 package net.lamgc.automusician
 
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import mu.KotlinLogging
 import java.io.File
 import java.io.IOException
@@ -14,14 +14,13 @@ object Const {
     private const val PATH_SERVER_CONFIG = "./config.json"
     val FILE_SERVER_CONFIG: File
         get() = File(AppProperties.getProperty(PropertyNames.FILE_CONFIG, PATH_SERVER_CONFIG))
-    val moshi: Moshi = Moshi.Builder()
-        .addLast(KotlinJsonAdapterFactory())
-        .build()
+    val gson: Gson = GsonBuilder()
+        .generateNonExecutableJson()
+        .serializeNulls()
+        .setPrettyPrinting()
+        .create()
     val config = loadServerConfig()
 }
-
-private val adapter = Const.moshi.adapter(ServerConfig::class.java)
-    .serializeNulls()
 
 fun loadServerConfig(configFile: File = Const.FILE_SERVER_CONFIG): ServerConfig {
     return if (!configFile.exists()) {
@@ -29,7 +28,7 @@ fun loadServerConfig(configFile: File = Const.FILE_SERVER_CONFIG): ServerConfig 
         ServerConfig.DEFAULT
     } else {
         try {
-            val properties = (adapter.fromJson(configFile.readText(StandardCharsets.UTF_8))
+            val properties = (Const.gson.fromJson(configFile.readText(StandardCharsets.UTF_8), ServerConfig::class.java)
                 ?: ServerConfig.DEFAULT)
             if (properties == ServerConfig.DEFAULT) {
                 logger.warn { "The configuration file is empty. Use the default configuration file to run the server." }
@@ -56,7 +55,7 @@ enum class PropertyNames {
 }
 
 fun writeDefaultConfigFile(configFile: File = Const.FILE_SERVER_CONFIG) {
-    configFile.writeText(adapter.toJson(ServerConfig.DEFAULT), StandardCharsets.UTF_8)
+    configFile.writeText(Const.gson.toJson(ServerConfig.DEFAULT), StandardCharsets.UTF_8)
 }
 
 data class ServerConfig(

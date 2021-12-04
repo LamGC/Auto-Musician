@@ -43,10 +43,6 @@ internal fun String.toApiUrl(cookie: String? = null): String {
     } + if (cookie != null) "&cookie=${URLEncoder.encode(cookie, StandardCharsets.UTF_8)}" else ""
 }
 
-private val apiResponseEntityMapAdapter = Const.moshi.adapter(ApiResponseEntityMap::class.java)!!
-private val apiResponseWithoutEntityAdapter = Const.moshi.adapter(ApiResponseWithoutEntity::class.java)!!
-private val qrAdapter = Const.moshi.adapter(QrCodeLoginCheckResponse::class.java)!!
-
 object NeteaseCloud {
 
     /**
@@ -63,7 +59,7 @@ object NeteaseCloud {
                 if (!success) {
                     throw cause!!
                 } else {
-                    return@get apiResponseEntityMapAdapter.fromJson(content!!)!!.data!!["unikey"]!!
+                    return@get Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!.data!!["unikey"]!!
                 }
             }))
     }
@@ -78,7 +74,7 @@ object NeteaseCloud {
                 if (!success) {
                     throw cause!!
                 } else {
-                    val response = apiResponseEntityMapAdapter.fromJson(content!!)!!
+                    val response = Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!
                     return@get LoginQrCode(response.data!!["qrurl"]!!, response.data["qrimg"]!!)
                 }
             })
@@ -97,7 +93,7 @@ object NeteaseCloud {
                             if (!success) {
                                 throw cause!!
                             } else {
-                                qrAdapter.fromJson(content!!)!!
+                                Const.gson.fromJson(content!!, QrCodeLoginCheckResponse::class.java)!!
                             }
                         })
                 } catch (e: IOException) {
@@ -126,17 +122,15 @@ object NeteaseCloud {
     fun logout(cookie: String): Boolean {
         return HttpUtils.get("/logout".toApiUrl(), cookie) { success, response, content, _ ->
             success && (response?.notError()
-                ?: false) && apiResponseWithoutEntityAdapter.fromJson(content!!)?.code == 200
+                ?: false) && Const.gson.fromJson(content!!, ApiResponseWithoutEntity::class.java)?.code == 200
         }
     }
-
-    private val accountAdapter = Const.moshi.adapter(NeteaseCloudUserAccount::class.java)
 
     fun getUserAccount(cookie: String): NeteaseCloudUserAccount {
         return HttpUtils.get("/user/account".toApiUrl(cookie))
         { success, response, content, _ ->
             if (success) {
-                return@get accountAdapter.nonNull().fromJson(content!!)!!
+                return@get Const.gson.fromJson(content!!, NeteaseCloudUserAccount::class.java)!!
             } else {
                 throw IOException("The HTTP request failed with a status code other than 200: ${response?.code}")
             }
@@ -154,16 +148,12 @@ object NeteaseCloud {
 }
 
 object NeteaseCloudMusician {
-
-    private val taskAdapter = Const.moshi.adapter(MusicianTaskApiResponse::class.java)
-    private val apiResponseEntityAdapter = Const.moshi.adapter(ApiResponseEntity::class.java)
-
     fun getTasks(cookie: String): List<MusicianTask> {
         return HttpUtils.get("/musician/tasks".toApiUrl(cookie), null) { success, _, content, cause ->
             if (!success) {
                 throw cause!!
             }
-            taskAdapter.fromJson(content!!)!!.data["list"]!!
+            Const.gson.fromJson(content!!, MusicianTaskApiResponse::class.java)!!.data["list"]!!
         }
     }
 
@@ -174,7 +164,7 @@ object NeteaseCloudMusician {
                 throw cause!!
             }
 
-            val responseEntity = apiResponseEntityMapAdapter.fromJson(content!!)!!
+            val responseEntity = Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!
             responseEntity.code == 200 && responseEntity.message.contentEquals("success", true)
         }
     }
@@ -186,7 +176,7 @@ object NeteaseCloudMusician {
                 throw cause!!
             }
 
-            val responseEntity = apiResponseEntityAdapter.fromJson(content!!)!!
+            val responseEntity = Const.gson.fromJson(content!!, ApiResponseEntity::class.java)!!
             responseEntity.code == 200 &&
                     responseEntity.message.contentEquals("success", true) &&
                     (responseEntity.data as Boolean)

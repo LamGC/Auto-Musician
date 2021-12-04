@@ -21,8 +21,7 @@ dependencies {
     implementation("org.apache.httpcomponents.client5:httpclient5:5.1.1")
 
     // Json
-    implementation("com.squareup.moshi:moshi:1.12.0")
-    implementation("com.squareup.moshi:moshi-kotlin:1.12.0")
+    implementation("com.google.code.gson:gson:2.8.9")
 
     implementation("org.ktorm:ktorm-core:3.4.1")
     runtimeOnly("mysql:mysql-connector-java:8.0.27")
