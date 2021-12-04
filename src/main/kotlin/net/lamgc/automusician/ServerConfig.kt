@@ -10,7 +10,7 @@ import java.util.*
 
 private val logger = KotlinLogging.logger {  }
 
-object Constants {
+object Const {
     private const val PATH_SERVER_CONFIG = "./config.json"
     val FILE_SERVER_CONFIG: File
         get() = File(AppProperties.getProperty(PropertyNames.FILE_CONFIG, PATH_SERVER_CONFIG))
@@ -20,10 +20,10 @@ object Constants {
     val config = loadServerConfig()
 }
 
-private val adapter = Constants.moshi.adapter(ServerConfig::class.java)
+private val adapter = Const.moshi.adapter(ServerConfig::class.java)
     .serializeNulls()
 
-fun loadServerConfig(configFile: File = Constants.FILE_SERVER_CONFIG): ServerConfig {
+fun loadServerConfig(configFile: File = Const.FILE_SERVER_CONFIG): ServerConfig {
     return if (!configFile.exists()) {
         logger.warn { "The configuration file does not exist. Run the server with the default configuration." }
         ServerConfig.DEFAULT
@@ -55,7 +55,7 @@ enum class PropertyNames {
     FILE_CONFIG
 }
 
-fun writeDefaultConfigFile(configFile: File = Constants.FILE_SERVER_CONFIG) {
+fun writeDefaultConfigFile(configFile: File = Const.FILE_SERVER_CONFIG) {
     configFile.writeText(adapter.toJson(ServerConfig.DEFAULT), StandardCharsets.UTF_8)
 }
 

@@ -23,16 +23,16 @@ interface NeteaseCloudUser: Entity<NeteaseCloudUser> {
 
 internal fun String.toApiUrl(cookie: String? = null): String {
     val apiUrl = if (this.startsWith("/")) {
-        if (Constants.config.apiServer.endsWith("/")) {
-            Constants.config.apiServer + this.substring(1)
+        if (Const.config.apiServer.endsWith("/")) {
+            Const.config.apiServer + this.substring(1)
         } else {
-            Constants.config.apiServer + this
+            Const.config.apiServer + this
         }
     } else {
-        if (Constants.config.apiServer.endsWith("/")) {
-            Constants.config.apiServer + this
+        if (Const.config.apiServer.endsWith("/")) {
+            Const.config.apiServer + this
         } else {
-            "${Constants.config.apiServer}/$this"
+            "${Const.config.apiServer}/$this"
         }
     }
 
@@ -43,9 +43,9 @@ internal fun String.toApiUrl(cookie: String? = null): String {
     } + if (cookie != null) "&cookie=${URLEncoder.encode(cookie, StandardCharsets.UTF_8)}" else ""
 }
 
-private val apiResponseEntityMapAdapter = Constants.moshi.adapter(ApiResponseEntityMap::class.java)!!
-private val apiResponseWithoutEntityAdapter = Constants.moshi.adapter(ApiResponseWithoutEntity::class.java)!!
-private val qrAdapter = Constants.moshi.adapter(QrCodeLoginCheckResponse::class.java)!!
+private val apiResponseEntityMapAdapter = Const.moshi.adapter(ApiResponseEntityMap::class.java)!!
+private val apiResponseWithoutEntityAdapter = Const.moshi.adapter(ApiResponseWithoutEntity::class.java)!!
+private val qrAdapter = Const.moshi.adapter(QrCodeLoginCheckResponse::class.java)!!
 
 object NeteaseCloud {
 
@@ -130,7 +130,7 @@ object NeteaseCloud {
         }
     }
 
-    private val accountAdapter = Constants.moshi.adapter(NeteaseCloudUserAccount::class.java)
+    private val accountAdapter = Const.moshi.adapter(NeteaseCloudUserAccount::class.java)
 
     fun getUserAccount(cookie: String): NeteaseCloudUserAccount {
         return HttpUtils.get("/user/account".toApiUrl(cookie))
@@ -155,8 +155,8 @@ object NeteaseCloud {
 
 object NeteaseCloudMusician {
 
-    private val taskAdapter = Constants.moshi.adapter(MusicianTaskApiResponse::class.java)
-    private val apiResponseEntityAdapter = Constants.moshi.adapter(ApiResponseEntity::class.java)
+    private val taskAdapter = Const.moshi.adapter(MusicianTaskApiResponse::class.java)
+    private val apiResponseEntityAdapter = Const.moshi.adapter(ApiResponseEntity::class.java)
 
     fun getTasks(cookie: String): List<MusicianTask> {
         return HttpUtils.get("/musician/tasks".toApiUrl(cookie), null) { success, _, content, cause ->

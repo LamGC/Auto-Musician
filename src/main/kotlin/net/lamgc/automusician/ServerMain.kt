@@ -16,11 +16,11 @@ private val logger = KotlinLogging.logger {  }
 
 fun initial(args: Array<String>) {
     processArguments(args)
-    if (!Constants.FILE_SERVER_CONFIG.exists()) {
+    if (!Const.FILE_SERVER_CONFIG.exists()) {
         writeDefaultConfigFile()
         println(
             "The configuration file has been initialized. Please restart the server after configuration." +
-                    "(Path: ${Constants.FILE_SERVER_CONFIG.canonicalPath})"
+                    "(Path: ${Const.FILE_SERVER_CONFIG.canonicalPath})"
         )
         exitProcess(1)
     }
@@ -50,7 +50,7 @@ fun Application.modules() {
 fun main(args: Array<String>): Unit = runBlocking {
     logger.info { "The automatic musician is getting up..." }
     initial(args)
-    embeddedServer(Netty, port = Constants.config.httpPort, host = Constants.config.bindAddress) {
+    embeddedServer(Netty, port = Const.config.httpPort, host = Const.config.bindAddress) {
         modules()
         routing {
             pages()
@@ -59,6 +59,6 @@ fun main(args: Array<String>): Unit = runBlocking {
     }.start(wait = false)
     logger.info {
         "The automatic musician is awake! He's working now! " +
-                "(Here: http://${Constants.config.bindAddress}:${Constants.config.httpPort})"
+                "(Here: http://${Const.config.bindAddress}:${Const.config.httpPort})"
     }
 }
