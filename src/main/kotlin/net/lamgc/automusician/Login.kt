@@ -63,7 +63,6 @@ object QrCodeLoginMonitor {
                             }
                         """.trimIndent()
                         for (session in sessions) {
-                            // FIXME(LamGC, 2021.11.15): 浏览器那侧的登录回报还是会在收到消息后掉线，需要检查一下原因。
                             logger.debug { "正在发送给 $session" }
                             if (!session.isActive) {
                                 logger.debug { "会话已失效, 跳过发送." }
