@@ -14,6 +14,7 @@ import java.io.IOException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 class HashcodeSet<T>(private val map: MutableMap<Int, T>, override val size: Int = map.size) : MutableSet<T> {
 
@@ -74,9 +75,11 @@ object HttpUtils {
         .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36")
         .build()
 
-    fun <R> get(url: String,
-                cookie: String? = null,
-                action: (success: Boolean, response: HttpResponse?, content: String?, cause: Throwable?) -> R): R {
+    fun <R> get(
+        url: String,
+        cookie: String? = null,
+        action: (success: Boolean, response: HttpResponse?, content: String?, cause: Throwable?) -> R
+    ): R {
 
         val request = HttpGet(url)
 
@@ -93,10 +96,12 @@ object HttpUtils {
 
     }
 
-    fun <R> post(url: String, body: String,
-                 requestEntity: HttpEntity? = null,
-                 cookie: String?,
-                 action: (success: Boolean, response: HttpResponse?, content: String?, cause: Throwable?) -> R): R {
+    fun <R> post(
+        url: String, body: String,
+        requestEntity: HttpEntity? = null,
+        cookie: String?,
+        action: (success: Boolean, response: HttpResponse?, content: String?, cause: Throwable?) -> R
+    ): R {
         val request = HttpPost(url)
         if (requestEntity != null) {
             request.entity = requestEntity
@@ -122,7 +127,7 @@ fun HttpResponse.notError(): Boolean {
     return this.code !in 400..599
 }
 
-class MultiValueMap<K, V>: MutableMap<K, MutableList<V>> {
+class MultiValueMap<K, V> : MutableMap<K, MutableList<V>> {
 
     private val map = ConcurrentHashMap<K, MutableList<V>>()
 
@@ -149,7 +154,7 @@ class MultiValueMap<K, V>: MutableMap<K, MutableList<V>> {
     fun put(key: K, value: V) {
         getValuesByKey(key, create = true).add(value)
     }
-    
+
     override fun putAll(from: Map<out K, MutableList<V>>) = map.putAll(from)
 
     override fun remove(key: K): MutableList<V>? = map.remove(key!!)
@@ -177,5 +182,23 @@ class MultiValueMap<K, V>: MutableMap<K, MutableList<V>> {
     override val values: MutableCollection<MutableList<V>>
         get() = map.values
 
+}
 
+fun Random.nextString(length: Int = nextInt(32)): String {
+    val buffer = StringBuilder()
+    for (i in 0..length) {
+        val char = when (val num = nextInt(62)) {
+            in 0..25 -> {
+                'A' + num
+            }
+            in 26..51 -> {
+                'a' + num
+            }
+            else -> {
+                '0' + num
+            }
+        }
+        buffer.append(char)
+    }
+    return buffer.toString()
 }

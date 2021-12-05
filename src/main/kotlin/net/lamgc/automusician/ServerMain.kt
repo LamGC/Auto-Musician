@@ -47,16 +47,27 @@ fun Application.modules() {
     }
 }
 
+fun Application.router() {
+    routing {
+        pages()
+        api()
+    }
+}
+
+private val serverEnvironment = applicationEngineEnvironment {
+    connector {
+        host = Const.config.bindAddress
+        port = Const.config.httpPort
+    }
+    module(Application::modules)
+    module(Application::router)
+    sslConfig()
+}
+
 fun main(args: Array<String>): Unit = runBlocking {
     logger.info { "The automatic musician is getting up..." }
     initial(args)
-    embeddedServer(Netty, port = Const.config.httpPort, host = Const.config.bindAddress) {
-        modules()
-        routing {
-            pages()
-            api()
-        }
-    }.start(wait = false)
+    embeddedServer(Netty, serverEnvironment).start(wait = false)
     logger.info {
         "The automatic musician is awake! He's working now! " +
                 "(Here: http://${Const.config.bindAddress}:${Const.config.httpPort})"

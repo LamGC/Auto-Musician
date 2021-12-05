@@ -92,11 +92,12 @@ fun HTML.loginPage() {
 
         script {
             unsafe {
+                // language=JavaScript
                 +"""
                     let preload = document.getElementById("$preloadLogin");
                     let loginInfo = JSON.parse(preload.content);
                     
-                    let loginResultWs = new WebSocket((location.protocol === "https" ? "wss://" : "ws://") + 
+                    let loginResultWs = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + 
                         location.host + "/api/login/check?id=" + loginInfo["loginId"]);
                     let resultShower = document.getElementsByClassName("loginResult")[0];
                     loginResultWs.onmessage = function (event) {

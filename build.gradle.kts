@@ -31,10 +31,14 @@ dependencies {
     // Test
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.5.31")
 
+    implementation("org.bouncycastle:bcprov-jdk15to18:1.70")
+    implementation("org.bouncycastle:bcpkix-jdk15to18:1.70")
+
     // Ktor
     val ktorVersion = "1.6.6"
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-html-builder:$ktorVersion")
+    implementation("io.ktor:ktor-network-tls-certificates:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3")
     implementation("io.ktor:ktor-websockets:$ktorVersion")
 }
