@@ -66,6 +66,7 @@ private val serverEnvironment = applicationEngineEnvironment {
 
 fun main(args: Array<String>): Unit = runBlocking {
     logger.info { "The automatic musician is getting up..." }
+    logger.info { "Workdir: ${File(".").canonicalPath}" }
     initial(args)
     embeddedServer(Netty, serverEnvironment).start(wait = false)
     logger.info {

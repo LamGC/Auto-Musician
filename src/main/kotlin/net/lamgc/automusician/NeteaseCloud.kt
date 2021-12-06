@@ -128,11 +128,11 @@ object NeteaseCloud {
 
     fun getUserAccount(cookie: String): NeteaseCloudUserAccount {
         return HttpUtils.get("/user/account".toApiUrl(cookie))
-        { success, response, content, _ ->
+        { success, response, content, cause ->
             if (success) {
                 return@get Const.gson.fromJson(content!!, NeteaseCloudUserAccount::class.java)!!
             } else {
-                throw IOException("The HTTP request failed with a status code other than 200: ${response?.code}")
+                throw IOException("The HTTP request failed with a status code other than 200: ${response?.code}", cause)
             }
         }
     }
