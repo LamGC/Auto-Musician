@@ -9,6 +9,7 @@ import org.ktorm.schema.Table
 import org.ktorm.schema.datetime
 import org.ktorm.schema.long
 import org.ktorm.schema.varchar
+import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
 import kotlin.system.exitProcess
@@ -31,11 +32,8 @@ fun initialDatabase() {
     val jdbcUrl = "jdbc:mysql://" +
             "${Const.config.database.address}/${Const.config.database.databaseName}?" +
             "user=${Const.config.database.user}&password=${Const.config.database.password}"
-    if (!checkDatabaseConnectivity(jdbcUrl)) {
-        exitProcess(1)
-    }
 
-    DriverManager.getConnection(jdbcUrl).use { connection ->
+    val result = openDatabaseConnectionOrFailure(jdbcUrl) { connection ->
         val statement = connection.createStatement()
         val result = statement.executeUpdate(
             """
@@ -53,18 +51,24 @@ fun initialDatabase() {
             logger.debug { "Database initialization completed." }
         }
     }
+
+    if (!result) {
+        exitProcess(1)
+    }
 }
 
-fun checkDatabaseConnectivity(jdbcUrl: String): Boolean {
-    return try {
-        DriverManager.getConnection(jdbcUrl).use {
-            it.close()
-            true
-        }
+fun openDatabaseConnectionOrFailure(jdbcUrl: String, block: (Connection) -> Unit): Boolean {
+    val connection: Connection
+    try {
+        connection = DriverManager.getConnection(jdbcUrl)
     } catch (e: SQLException) {
-        logger.error { "Unable to connect to database: [${e.errorCode}] ${e.message}" }
-        false
+        logger.error(e) { "Unable to connect to database: [${e.errorCode}] ${e.message}" }
+        return false
     }
+    connection.use {
+        block(connection)
+    }
+    return true
 }
 
 object NeteaseCloudUserPO : Table<NeteaseCloudUser>("musician_users") {
