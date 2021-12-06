@@ -7,6 +7,7 @@ import org.ktorm.entity.add
 import org.ktorm.entity.update
 import java.io.IOException
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -36,12 +37,16 @@ object QrCodeLoginMonitor {
                 var repeatLogin = false
                 var userId: Long? = null
                 var userNick: String? = null
+                var lastLogin: LocalDateTime? = null
                 if (success) {
                     val cookies = handleCookies(cookie!!)
                     val userAccount = NeteaseCloud.getUserAccount(cookie)
                     userId = NeteaseCloud.getUserId(userAccount = userAccount)
                     repeatLogin = NeteaseCloudUserPO.hasUser(userId)
                     userNick = NeteaseCloud.getUserName(userAccount = userAccount)
+                    if (repeatLogin) {
+                        lastLogin = NeteaseCloudUserPO.getUserById(userId)!!.loginDate
+                    }
                     logger.debug {
                         "登录成功, 正在录入数据库, 登录用户 $userNick($userId), " +
                                 "创作者: ${NeteaseCloudMusician.isCreator(userAccount = userAccount)}"
@@ -59,7 +64,8 @@ object QrCodeLoginMonitor {
                               "message": "$message",
                               "repeatLogin": $repeatLogin,
                               "userId": ${userId ?: -1},
-                              "userName": "$userNick"
+                              "userName": "$userNick",
+                              "lastLogin": ${lastLogin?.atZone(ZoneId.systemDefault())?.toInstant()?.epochSecond}
                             }
                         """.trimIndent()
                         for (session in sessions) {

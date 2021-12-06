@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package net.lamgc.automusician
 
 import io.ktor.application.*
@@ -46,6 +48,7 @@ fun HTML.index() {
     }
 }
 
+@Suppress("CssUnusedSymbol", "JSUnresolvedVariable")
 fun HTML.loginPage() {
     val loginUUID = NeteaseCloud.createLoginQrCodeId()
     val preloadLogin = "preload-login"
@@ -74,7 +77,7 @@ fun HTML.loginPage() {
                 .hidden {
                     display: none;
                 }
-            """
+            """.trimIndent()
         }
     }
 
@@ -110,7 +113,8 @@ fun HTML.loginPage() {
                         if (response["success"] === true) {
                             resultShower.innerHTML = "登录成功！网易云用户：" + response["userName"] +
                                 "(" + response["userId"] + ")，" + (response["repeatLogin"] === true ? 
-                                "该帐号已成功更新登录信息(如旧的登录凭证仍然有效, 将自动登出以销毁凭证)" :
+                                "该帐号已成功更新登录信息(如旧的登录凭证仍然有效, 将自动登出以销毁凭证), 上一次登录时间为 " + 
+                                new Date(response["lastLogin"]) :
                             "该帐号在本站为首次登录.")
                         } else {
                             resultShower.innerHTML = response["message"];
@@ -118,7 +122,7 @@ fun HTML.loginPage() {
                     }
                     loginResultWs.onclose = function () {console.warn ("回报连接已关闭.")}
                     loginResultWs.onerror = function () { console.error ("发生错误", arguments)}
-                """
+                """.trimIndent()
             }
         }
     }
