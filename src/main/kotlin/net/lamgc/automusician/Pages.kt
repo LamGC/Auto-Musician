@@ -120,8 +120,8 @@ fun HTML.loginPage() {
                             resultShower.innerHTML = response["message"];
                         }
                     }
-                    loginResultWs.onclose = function () {console.warn ("回报连接已关闭.")}
-                    loginResultWs.onerror = function () { console.error ("发生错误", arguments)}
+                    loginResultWs.onclose = function () { console.warn ("回报连接已关闭."); }
+                    loginResultWs.onerror = function () { console.error ("发生错误", arguments); }
                 """.trimIndent()
             }
         }
