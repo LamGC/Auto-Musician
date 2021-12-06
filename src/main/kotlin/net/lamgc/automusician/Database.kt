@@ -40,7 +40,7 @@ fun initialDatabase() {
             CREATE TABLE IF NOT EXISTS ${NeteaseCloudUserPO.tableName} (
                 uid BIGINT PRIMARY KEY NOT NULL,
                 cookies TEXT NOT NULL,
-                login_date DATE NOT NULL 
+                login_date DATETIME NOT NULL 
             )
         """.trimIndent()
         )
