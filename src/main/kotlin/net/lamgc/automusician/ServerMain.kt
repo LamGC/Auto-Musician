@@ -54,20 +54,19 @@ fun Application.router() {
     }
 }
 
-private val serverEnvironment = applicationEngineEnvironment {
-    connector {
-        host = Const.config.bindAddress
-        port = Const.config.httpPort
-    }
-    module(Application::modules)
-    module(Application::router)
-    sslConfig()
-}
-
 fun main(args: Array<String>): Unit = runBlocking {
     logger.info { "The automatic musician is getting up..." }
     logger.info { "Workdir: ${File(".").canonicalPath}" }
     initial(args)
+    val serverEnvironment = applicationEngineEnvironment {
+        connector {
+            host = Const.config.bindAddress
+            port = Const.config.httpPort
+        }
+        module(Application::modules)
+        module(Application::router)
+        sslConfig()
+    }
     embeddedServer(Netty, serverEnvironment).start(wait = false)
     logger.info {
         "The automatic musician is awake! He's working now! " +
