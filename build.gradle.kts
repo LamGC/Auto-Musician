@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "net.lamgc"
-version = "1.0.0-rc3"
+version = "1.0.0-rc4"
 
 repositories {
     mavenCentral()
