@@ -189,13 +189,13 @@ fun Random.nextString(length: Int = nextInt(32)): String {
     for (i in 0..length) {
         val char = when (val num = nextInt(62)) {
             in 0..25 -> {
-                'A' + num
+                'A' + (num % 26)
             }
             in 26..51 -> {
-                'a' + num
+                'a' + (num % 26)
             }
             else -> {
-                '0' + num
+                '0' + (num % 10)
             }
         }
         buffer.append(char)
