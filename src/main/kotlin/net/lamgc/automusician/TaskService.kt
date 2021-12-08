@@ -15,25 +15,45 @@ import java.util.concurrent.*
 
 private val logger = KotlinLogging.logger { }
 
+/**
+ * 任务管理器.
+ */
 object TaskManager {
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH-mm-ss:SSS")
     private val triggerMap: MutableMap<Task, TaskTrigger> = ConcurrentHashMap()
     private val lastFutureMap: MutableMap<Task, ScheduledFuture<*>> = ConcurrentHashMap()
 
+    /**
+     * 注册任务.
+     *
+     * @param task 任务对象.
+     * @param trigger 任务触发器.
+     */
     fun registerTask(task: Task, trigger: TaskTrigger) {
         triggerMap[task] = trigger
         val nextExecuteTime = scheduleTask(task)
-        logger.debug {
+        logger.info {
             "已注册任务 $task, 下一次执行时间: " +
                     dateFormat.format(Date(System.currentTimeMillis() + nextExecuteTime))
         }
     }
 
+    /**
+     * 注销任务.
+     *
+     * 注销之后将不再执行任务.
+     * @param task 任务对象.
+     */
     @Suppress("MemberVisibilityCanBePrivate")
     fun unregisterTask(task: Task) {
         triggerMap.remove(task)
     }
 
+    /**
+     * 重新设定任务定时器.
+     *
+     * 该方法为内部方法, 不要调用它!
+     */
     internal fun scheduleTask(task: Task): Long {
         val trigger = triggerMap[task]!!
         val nextExecuteTime = trigger.nextExecuteTime()
@@ -47,7 +67,12 @@ object TaskManager {
 
 }
 
-private class TaskExecuteWrapper(val task: Task): Runnable {
+/**
+ * 任务执行包装器.
+ *
+ * 通过包装器可以将重设定时的操作包装起来, 任务实现类无需处理该问题.
+ */
+private class TaskExecuteWrapper(val task: Task) : Runnable {
     override fun run() {
         try {
             task.run()
@@ -59,7 +84,6 @@ private class TaskExecuteWrapper(val task: Task): Runnable {
 }
 
 object ScheduledTaskExecutor {
-
     private val threadPoolExecutor: ScheduledExecutorService =
         Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors())
 
@@ -69,8 +93,8 @@ object ScheduledTaskExecutor {
 
 }
 
-interface Task: Runnable
-abstract class NeteaseCloudUserTask: Task {
+interface Task : Runnable
+abstract class NeteaseCloudUserTask : Task {
     override fun run() {
         database.NeteaseCloudUserPO.forEach { action(it) }
     }
@@ -88,7 +112,7 @@ interface TaskTrigger {
 
 }
 
-class CronTrigger(cron: Cron): TaskTrigger {
+class CronTrigger(cron: Cron) : TaskTrigger {
 
     constructor(cronExpression: String, cronDefinition: CronDefinition) :
             this(CronParser(cronDefinition).parse(cronExpression))

@@ -26,9 +26,12 @@ fun Routing.api() {
         } catch (e: Exception) {
             logger.error(e) { "解析参数时发生异常." }
             outgoing.send(
-                Frame.Text("""
+                Frame.Text(
+                    """
                         {"confirm": false, "message": "Bad request parameters."}
-                    """.trimIndent()))
+                    """.trimIndent()
+                )
+            )
             close()
             return@webSocket
         }
@@ -36,18 +39,24 @@ fun Routing.api() {
         if (!QrCodeLoginMonitor.hasLoginSession(webId)) {
             logger.debug { "找不到指定的 Login Web Id. (id: $webId)" }
             outgoing.send(
-                Frame.Text("""
+                Frame.Text(
+                    """
                         {"confirm": false, "message": "Login session not found."}
-                    """.trimIndent()))
+                    """.trimIndent()
+                )
+            )
             close()
             return@webSocket
         }
         val job = QrCodeLoginMonitor.addListener(webId, this)
 
         outgoing.send(
-            Frame.Text("""
+            Frame.Text(
+                """
                         {"confirm": true, "message": "Accepted, waiting for return."}
-                    """.trimIndent()))
+                    """.trimIndent()
+            )
+        )
         job.join()
     }
 }

@@ -50,7 +50,7 @@ fun HTML.index() {
 
 @Suppress("CssUnusedSymbol", "JSUnresolvedVariable")
 fun HTML.loginPage() {
-    val loginUUID = NeteaseCloud.createLoginQrCodeId()
+    val loginUUID = NeteaseCloudMusic.createLoginQrCodeId()
     val preloadLogin = "preload-login"
     logger.debug { "新的登录请求, NC Login Id: $loginUUID, Web Login Id: ${HashcodeSet.getHash(loginUUID)}" }
     head {
@@ -84,7 +84,7 @@ fun HTML.loginPage() {
     body(classes = "center") {
         +"扫描下方二维码，登录网易云"
         br()
-        img(src = NeteaseCloud.getLoginQrCode(loginUUID).loginQrCodeBlob, alt = "Login Qr Code")
+        img(src = NeteaseCloudMusic.getLoginQrCode(loginUUID).loginQrCodeBlob, alt = "Login Qr Code")
         textArea(classes = "center loginResult") {
             attributes["readonly"] = "readonly"
         }

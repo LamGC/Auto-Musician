@@ -7,23 +7,29 @@ import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger { }
 
+/**
+ * 任务 - 云豆自动领取.
+ */
 object AutoReceiveCloudBeans : NeteaseCloudUserTask() {
     override fun action(user: NeteaseCloudUser) {
         if (!NeteaseCloudMusician.isCreator(user.cookies)) {
             return
         }
-        NeteaseCloudMusician.getTasks(user.cookies).filter { logger.debug { "Task: $it" };it.status == 20 }
+        NeteaseCloudMusician.getTasks(user.cookies).filter { it.status == 20 }
             .forEach {
                 NeteaseCloudMusician.receiveTaskReward(
                     cookie = user.cookies,
                     userMissionId = it.userMissionId!!,
                     period = it.period
                 )
-                logger.debug { "已自动领取用户 ${user.uid} 任务 \"${it.description}\" 的奖励." }
+                logger.info { "已自动领取用户 ${user.uid} 任务 \"${it.description}\" 的奖励." }
             }
     }
 }
 
+/**
+ * 任务 - 音乐人自动签到.
+ */
 object MusicianSignIn : NeteaseCloudUserTask() {
 
     override fun action(user: NeteaseCloudUser) {
@@ -31,12 +37,14 @@ object MusicianSignIn : NeteaseCloudUserTask() {
             return
         }
         NeteaseCloudMusician.signIn(user.cookies)
-
-        logger.debug { "音乐人 ${user.uid} 签到完成." }
+        logger.info { "音乐人 ${user.uid} 签到完成." }
     }
 
 }
 
+/**
+ * 任务初始化方法.
+ */
 fun initialTasks() {
     TaskManager.registerTask(
         MusicianSignIn, CronTrigger(

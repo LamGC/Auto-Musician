@@ -12,8 +12,11 @@ import java.io.File
 import java.time.Duration
 import kotlin.system.exitProcess
 
-private val logger = KotlinLogging.logger {  }
+private val logger = KotlinLogging.logger { }
 
+/**
+ * 初始化方法.
+ */
 fun initial(args: Array<String>) {
     processArguments(args)
     if (!Const.FILE_SERVER_CONFIG.exists()) {
@@ -28,6 +31,9 @@ fun initial(args: Array<String>) {
     initialTasks()
 }
 
+/**
+ * 参数处理方法.
+ */
 fun processArguments(args: Array<String>) {
     if (args.isNotEmpty()) {
         val configFile = File(args[0])
@@ -39,6 +45,9 @@ fun processArguments(args: Array<String>) {
     }
 }
 
+/**
+ * Ktor Server 模块安装方法.
+ */
 fun Application.modules() {
     install(WebSockets) {
         pingPeriod = Duration.ofSeconds(6)
@@ -47,6 +56,9 @@ fun Application.modules() {
     }
 }
 
+/**
+ * Ktor Server 路由方法.
+ */
 fun Application.router() {
     routing {
         pages()

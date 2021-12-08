@@ -11,9 +11,9 @@ import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
-private val logger = KotlinLogging.logger {  }
+private val logger = KotlinLogging.logger { }
 
-interface NeteaseCloudUser: Entity<NeteaseCloudUser> {
+interface NeteaseCloudUser : Entity<NeteaseCloudUser> {
     companion object : Entity.Factory<NeteaseCloudUser>()
 
     var uid: Long
@@ -21,6 +21,13 @@ interface NeteaseCloudUser: Entity<NeteaseCloudUser> {
     var loginDate: LocalDateTime
 }
 
+/**
+ * 将 String 视为 Path 并构造 ApiUrl.
+ *
+ * 该方法会自动添加 time 参数用于阻止自动缓存数据.
+ * @param cookie 请求所使用的 Cookie.
+ * @return 返回构造好的 ApiUrl.
+ */
 internal fun String.toApiUrl(cookie: String? = null): String {
     val apiUrl = if (this.startsWith("/")) {
         if (Const.config.apiServer.endsWith("/")) {
@@ -43,7 +50,10 @@ internal fun String.toApiUrl(cookie: String? = null): String {
     } + if (cookie != null) "&cookie=${URLEncoder.encode(cookie, StandardCharsets.UTF_8)}" else ""
 }
 
-object NeteaseCloud {
+/**
+ * 适用于普通用户的网易云音乐 API.
+ */
+object NeteaseCloudMusic {
 
     /**
      * 创建登录用 QR 码的 Id.
@@ -54,14 +64,15 @@ object NeteaseCloud {
         return UUID.fromString(
             HttpUtils.get(
                 url = "/login/qr/key".toApiUrl(),
-            action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
-                logger.debug { "Response: $content" }
-                if (!success) {
-                    throw cause!!
-                } else {
-                    return@get Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!.data!!["unikey"]!!
-                }
-            }))
+                action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
+                    logger.debug { "Response: $content" }
+                    if (!success) {
+                        throw cause!!
+                    } else {
+                        return@get Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!.data!!["unikey"]!!
+                    }
+                })
+        )
     }
 
     /**
@@ -80,7 +91,31 @@ object NeteaseCloud {
             })
     }
 
-    fun waitForQrCodeLoginResultAsync(id: UUID, action: (success: Boolean, code: Int, message: String, cookie: String?) -> Unit): Job {
+    /**
+     * 获取 QrCode 登录会话的结果.
+     *
+     */
+    fun getQrCodeLoginResult(loginId: UUID): QrCodeLoginCheckResponse {
+        return HttpUtils.get(url = "/login/qr/check?key=$loginId".toApiUrl(),
+            action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
+                if (!success) {
+                    throw cause!!
+                } else {
+                    Const.gson.fromJson(content!!, QrCodeLoginCheckResponse::class.java)!!
+                }
+            })
+    }
+
+    /**
+     * 启动轮询来检查 QrCode 登录会话的登录结果.
+     * @param id 网易云 QrCode 登录会话的 Id.
+     * @param action 轮询结果操作. 当轮询得到结果时被执行,
+     * action 将会重复调用直到登录会话结束(指 QrCode 过期, 或者登录成功.).
+     */
+    fun waitForQrCodeLoginResultAsync(
+        id: UUID,
+        action: (success: Boolean, code: Int, message: String, cookie: String?) -> Unit
+    ): Job {
         val job = CoroutineScope(Dispatchers.IO).launch {
             val counter = AtomicInteger()
             var errorCount = 0
@@ -88,14 +123,7 @@ object NeteaseCloud {
                 logger.debug { "[$id] 第 ${counter.incrementAndGet()} 次轮询." }
                 var apiResponse: QrCodeLoginCheckResponse
                 try {
-                    apiResponse = HttpUtils.get(url = "/login/qr/check?key=$id".toApiUrl(),
-                        action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
-                            if (!success) {
-                                throw cause!!
-                            } else {
-                                Const.gson.fromJson(content!!, QrCodeLoginCheckResponse::class.java)!!
-                            }
-                        })
+                    apiResponse = getQrCodeLoginResult(id)
                 } catch (e: IOException) {
                     logger.error(e) { "轮询扫码结果时发生异常." }
                     if (++errorCount > 5) {
@@ -119,6 +147,13 @@ object NeteaseCloud {
         return job
     }
 
+    /**
+     * 登出登录凭证.
+     *
+     * 登出后 Cookie 将失效.
+     * @param cookie 要登出的登录凭证.
+     * @return 登录成功返回 `true`.
+     */
     fun logout(cookie: String): Boolean {
         return HttpUtils.get("/logout".toApiUrl(), cookie) { success, response, content, _ ->
             success && (response?.notError()
@@ -126,28 +161,59 @@ object NeteaseCloud {
         }
     }
 
-    fun getUserAccount(cookie: String): NeteaseCloudUserAccount {
+    /**
+     * 获取凭证所属的帐号信息.
+     * @param cookie 登录 Cookie.
+     * @return 返回用户帐号信息.
+     */
+    fun getUserAccount(cookie: String): NeteaseCloudUserAccountResponse {
         return HttpUtils.get("/user/account".toApiUrl(cookie))
         { success, response, content, cause ->
             if (success) {
-                return@get Const.gson.fromJson(content!!, NeteaseCloudUserAccount::class.java)!!
+                return@get Const.gson.fromJson(content!!, NeteaseCloudUserAccountResponse::class.java)!!
             } else {
                 throw IOException("The HTTP request failed with a status code other than 200: ${response?.code}", cause)
             }
         }
     }
 
-    fun getUserId(cookie: String? = null, userAccount: NeteaseCloudUserAccount = getUserAccount(cookie!!)): Long {
+    /**
+     * 使用登录凭证获取所属的用户 Id.
+     * @param cookie 登录凭证, 与 userAccount 二选一.
+     * @param userAccount 用户帐号信息, 与 cookie 二选一.
+     */
+    fun getUserId(
+        cookie: String? = null,
+        userAccount: NeteaseCloudUserAccountResponse = getUserAccount(cookie!!)
+    ): Long {
         return (userAccount.account["id"]!! as Double).toLong()
     }
 
-    fun getUserName(cookie: String? = null, userAccount: NeteaseCloudUserAccount = getUserAccount(cookie!!)): String {
+    /**
+     * 使用登录凭证获取所属的用户昵称.
+     * @param cookie 登录凭证, 与 userAccount 二选一.
+     * @param userAccount 用户帐号信息, 与 cookie 二选一.
+     */
+    fun getUserName(
+        cookie: String? = null,
+        userAccount: NeteaseCloudUserAccountResponse = getUserAccount(cookie!!)
+    ): String {
         return (userAccount.profile["nickname"]!! as String)
     }
 
 }
 
+/**
+ * 专注于网易云音乐人的 API 集合.
+ */
 object NeteaseCloudMusician {
+
+    /**
+     * 获取音乐人任务列表.
+     * @param cookie 登录凭证.
+     * @return 返回音乐人任务列表.
+     * @see MusicianTask
+     */
     fun getTasks(cookie: String): List<MusicianTask> {
         return HttpUtils.get("/musician/tasks".toApiUrl(cookie), null) { success, _, content, cause ->
             if (!success) {
@@ -158,8 +224,10 @@ object NeteaseCloudMusician {
     }
 
     fun receiveTaskReward(cookie: String, userMissionId: Long, period: Int): Boolean {
-        return HttpUtils.get("/musician/cloudbean/obtain?id=$userMissionId&period=$period".toApiUrl(cookie), null) {
-                success, _, content, cause ->
+        return HttpUtils.get(
+            "/musician/cloudbean/obtain?id=$userMissionId&period=$period".toApiUrl(cookie),
+            null
+        ) { success, _, content, cause ->
             if (!success) {
                 throw cause!!
             }
@@ -169,9 +237,15 @@ object NeteaseCloudMusician {
         }
     }
 
+    /**
+     * 网易云音乐人签到.
+     *
+     * 要求用户为创作者才能使用.
+     *
+     * @param cookie 登录凭证.
+     */
     fun signIn(cookie: String): Boolean {
-        return HttpUtils.get("/musician/sign".toApiUrl(cookie), null) {
-                success, _, content, cause ->
+        return HttpUtils.get("/musician/sign".toApiUrl(cookie), null) { success, _, content, cause ->
             if (!success) {
                 throw cause!!
             }
@@ -183,9 +257,15 @@ object NeteaseCloudMusician {
         }
     }
 
+    /**
+     * 检查指定用户是否为创作者(可能不限于音乐人).
+     * @param cookie 登录凭证, 与 userAccount 二选一.
+     * @param userAccount 用户帐号信息, 与 cookie 二选一.
+     * @return 如果是创作者, 返回 `true`.
+     */
     fun isCreator(
         cookie: String? = null,
-        userAccount: NeteaseCloudUserAccount = NeteaseCloud.getUserAccount(cookie!!)
+        userAccount: NeteaseCloudUserAccountResponse = NeteaseCloudMusic.getUserAccount(cookie!!)
     ): Boolean {
         val type = (userAccount.profile["djStatus"] as Double).toInt()
         return type != 0
@@ -205,16 +285,42 @@ data class MusicianTaskApiResponse(
     val data: Map<String, List<MusicianTask>>
 )
 
-data class QrCodeLoginCheckResponse(val code: Int, val message: String, val cookie: String?)
+/**
+ * QrCode 登录结果.
+ * @property code 状态 Id, 有以下状态：
+ * - 800: 二维码过期
+ * - 801: 等待扫码
+ * - 802: 已扫码, 等待确认
+ * - 803: 已确定, 登录成功.
+ * @property message 接口返回消息.
+ * @property cookie 登录成功时返回的登录凭证 Cookie, 当 `code == 803` 时本属性不为 `null`.
+ */
+data class QrCodeLoginCheckResponse(
+    val code: Int,
+    val message: String,
+    val cookie: String?
+)
 
+/**
+ * 二维码登录信息.
+ * @property loginUrl 登录 Url, 需要通过网易云音乐 App 打开.
+ * @property loginQrCodeBlob 二维码图片数据, 可直接用于 Html 的 img:src 属性.
+ */
 data class LoginQrCode(val loginUrl: String, val loginQrCodeBlob: String)
 
 /**
  * 网易云帐号信息.
  * <p> 严重提醒：如果是数值型数据, 到 Map 中就是 Double 类型, 错误转换将导致 ClassCastException
  */
-data class NeteaseCloudUserAccount(val code: Int, val account: Map<String, Any?>, val profile: Map<String, Any?>)
+data class NeteaseCloudUserAccountResponse(
+    val code: Int,
+    val account: Map<String, Any?>,
+    val profile: Map<String, Any?>
+)
 
+/**
+ * 音乐人任务信息.
+ */
 data class MusicianTask(
     val userMissionId: Long?,
     val missionId: Long,

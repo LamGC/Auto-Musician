@@ -11,10 +11,34 @@ import java.util.*
 
 private val logger = KotlinLogging.logger { }
 
+/**
+ * 全局常量类.
+ */
 object Const {
+    /**
+     * 配置文件默认路径.
+     */
     private const val PATH_SERVER_CONFIG = "./config.json"
+
+    /**
+     * 配置文件的 File 对象.
+     *
+     * 该对象随着 AppProperties['FILE_CONFIG'] 的值发生变化.
+     */
     val FILE_SERVER_CONFIG: File
         get() = File(AppProperties.getProperty(PropertyNames.FILE_CONFIG, PATH_SERVER_CONFIG))
+
+    /**
+     * 全局的 Gson 对象.
+     *
+     * 如需创建单独的 Gson 对象, **建议**以该 Gson 对象为模板进行创建, 创建方法：
+     * ```kotlin
+     * val newGson = Const.gson.newBuilder()
+     *       .xxx()
+     *       .xxx()
+     *       .create()
+     * ```
+     */
     val gson: Gson = GsonBuilder()
         .serializeNulls()
         .setPrettyPrinting()
@@ -23,6 +47,12 @@ object Const {
     val config = loadServerConfig()
 }
 
+/**
+ * 加载配置文件.
+ *
+ * @param configFile 配置文件对象.
+ * @return 如果加载成功, 返回按配置文件加载的配置对象, 否则返回默认配置对象.
+ */
 fun loadServerConfig(configFile: File = Const.FILE_SERVER_CONFIG): ServerConfig {
     return if (!configFile.exists()) {
         logger.warn { "The configuration file does not exist. Run the server with the default configuration." }
@@ -47,6 +77,11 @@ fun loadServerConfig(configFile: File = Const.FILE_SERVER_CONFIG): ServerConfig 
     }
 }
 
+/**
+ * 项目全局键值存储.
+ *
+ * 部分运行参数可直接存储在内.
+ */
 val AppProperties = Properties()
 fun Properties.getProperty(property: PropertyNames, default: String): String =
     this.getProperty(property.name, default)
@@ -65,7 +100,8 @@ data class ServerConfig(
     val httpPort: Int = 8080,
     val ssl: SslConfig = SslConfig(),
     val database: DatabaseConnectConfig = DatabaseConnectConfig(),
-    val httpProxy: HttpProxy = HttpProxy()
+    val httpProxy: HttpProxy = HttpProxy(),
+    val enableWeb: Boolean = true
 ) {
     companion object {
         val DEFAULT = ServerConfig()
