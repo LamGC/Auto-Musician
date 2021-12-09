@@ -36,8 +36,12 @@ object MusicianSignIn : NeteaseCloudUserTask() {
         if (!NeteaseCloudMusician.isCreator(user.cookies)) {
             return
         }
-        NeteaseCloudMusician.signIn(user.cookies)
-        logger.info { "音乐人 ${user.uid} 签到完成." }
+        if (NeteaseCloudMusician.signIn(user.cookies)) {
+            logger.info { "音乐人 ${user.uid} 签到完成." }
+        } else {
+            logger.warn { "音乐人 ${user.uid} 签到失败." }
+        }
+
     }
 
 }
@@ -51,11 +55,12 @@ fun initialTasks() {
             CronBuilder.cron(CronType.SPRING.toDefinition())
                 .withSecond(on(0))
                 .withMinute(on(0))
-                .withHour(on(8))
+                .withHour(every(4))
                 .withDoM(always())
                 .withMonth(always())
                 .instance()
         )
+
     )
     TaskManager.registerTask(
         AutoReceiveCloudBeans, CronTrigger(

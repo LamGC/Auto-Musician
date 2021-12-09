@@ -251,9 +251,13 @@ object NeteaseCloudMusician {
             }
 
             val responseEntity = Const.gson.fromJson(content!!, ApiResponseEntity::class.java)!!
-            responseEntity.code == 200 &&
+            val result = responseEntity.code == 200 &&
                     responseEntity.message.contentEquals("success", true) &&
                     (responseEntity.data as Boolean)
+            if (!result) {
+                logger.warn { "签到时发生错误.(Response: `$responseEntity`)" }
+            }
+            result
         }
     }
 
