@@ -186,7 +186,7 @@ class MultiValueMap<K, V> : MutableMap<K, MutableList<V>> {
 
 fun Random.nextString(length: Int = nextInt(32)): String {
     val buffer = StringBuilder()
-    for (i in 0..length) {
+    for (i in 1..length) {
         val char = when (val num = nextInt(62)) {
             in 0..25 -> {
                 'A' + (num % 26)
