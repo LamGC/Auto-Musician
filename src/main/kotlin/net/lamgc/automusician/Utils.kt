@@ -36,9 +36,9 @@ class HashcodeSet<T>(private val map: MutableMap<Int, T>, override val size: Int
 
     override fun remove(element: T) = map.remove(element.hashCode(), element)
 
-    override fun removeAll(elements: Collection<T>) = map.values.removeAll(elements)
+    override fun removeAll(elements: Collection<T>) = map.values.removeAll(elements.toSet())
 
-    override fun retainAll(elements: Collection<T>) = map.values.retainAll(elements)
+    override fun retainAll(elements: Collection<T>) = map.values.retainAll(elements.toSet())
 
     override fun contains(element: T) = map.values.contains(element)
 
