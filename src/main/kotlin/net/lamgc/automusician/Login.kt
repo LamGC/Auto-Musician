@@ -88,7 +88,7 @@ object QrCodeLoginMonitor {
                               "repeatLogin": $repeatLogin,
                               "userId": ${userId ?: -1},
                               "userName": "$userNick",
-                              "lastLogin": ${lastLogin?.atZone(ZoneId.systemDefault())?.toInstant()?.epochSecond}
+                              "lastLogin": ${lastLogin?.atZone(ZoneId.systemDefault())?.toInstant()?.toEpochMilli()}
                             }
                         """.trimIndent()
                         for (session in sessions) {
