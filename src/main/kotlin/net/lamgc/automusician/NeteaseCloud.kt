@@ -50,6 +50,13 @@ internal fun String.toApiUrl(cookie: String? = null): String {
     } + if (cookie != null) "&cookie=${URLEncoder.encode(cookie, StandardCharsets.UTF_8)}" else ""
 }
 
+private fun requireResponseNotFailure(success: Boolean, cause: Throwable?) {
+    if (!success) {
+        logger.error(cause) { "An error occurred while accessing the interface." }
+        throw cause!!
+    }
+}
+
 /**
  * 适用于普通用户的网易云音乐 API.
  */
@@ -65,13 +72,8 @@ object NeteaseCloudMusic {
             HttpUtils.get(
                 url = "/login/qr/key".toApiUrl(),
                 action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
-                    logger.debug { "Response: $content" }
-                    if (!success) {
-                        logger.error(cause) { "请求发生错误." }
-                        throw cause!!
-                    } else {
-                        return@get Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!.data!!["unikey"]!!
-                    }
+                    requireResponseNotFailure(success, cause)
+                    Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!.data!!["unikey"]!!
                 })
         )
     }
@@ -83,13 +85,9 @@ object NeteaseCloudMusic {
     fun getLoginQrCode(id: UUID): LoginQrCode {
         return HttpUtils.get(url = "/login/qr/create?key=$id&qrimg=true".toApiUrl(),
             action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
-                if (!success) {
-                    logger.error(cause) { "请求发生错误." }
-                    throw cause!!
-                } else {
-                    val response = Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!
-                    return@get LoginQrCode(response.data!!["qrurl"]!!, response.data["qrimg"]!!)
-                }
+                requireResponseNotFailure(success, cause)
+                val response = Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!
+                return@get LoginQrCode(response.data!!["qrurl"]!!, response.data["qrimg"]!!)
             })
     }
 
@@ -101,12 +99,8 @@ object NeteaseCloudMusic {
     fun getQrCodeLoginResult(loginId: UUID): QrCodeLoginCheckResponse {
         return HttpUtils.get(url = "/login/qr/check?key=$loginId".toApiUrl(),
             action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
-                if (!success) {
-                    logger.error(cause) { "请求发生错误." }
-                    throw cause!!
-                } else {
-                    Const.gson.fromJson(content!!, QrCodeLoginCheckResponse::class.java)!!
-                }
+                requireResponseNotFailure(success, cause)
+                Const.gson.fromJson(content!!, QrCodeLoginCheckResponse::class.java)!!
             })
     }
 
@@ -159,7 +153,8 @@ object NeteaseCloudMusic {
      * @return 登录成功返回 `true`.
      */
     fun logout(cookie: String): Boolean {
-        return HttpUtils.get("/logout".toApiUrl(), cookie) { success, response, content, _ ->
+        return HttpUtils.get("/logout".toApiUrl(), cookie) { success, response, content, cause ->
+            requireResponseNotFailure(success, cause)
             success && (response?.notError()
                 ?: false) && Const.gson.fromJson(content!!, ApiResponseWithoutEntity::class.java)?.code == 200
         }
@@ -172,12 +167,9 @@ object NeteaseCloudMusic {
      */
     fun getUserAccount(cookie: String): NeteaseCloudUserAccountResponse {
         return HttpUtils.get("/user/account".toApiUrl(cookie))
-        { success, response, content, cause ->
-            if (success) {
-                return@get Const.gson.fromJson(content!!, NeteaseCloudUserAccountResponse::class.java)!!
-            } else {
-                throw IOException("The HTTP request failed with a status code other than 200: ${response?.code}", cause)
-            }
+        { success, _, content, cause ->
+            requireResponseNotFailure(success, cause)
+            return@get Const.gson.fromJson(content!!, NeteaseCloudUserAccountResponse::class.java)!!
         }
     }
 
@@ -220,10 +212,7 @@ object NeteaseCloudMusician {
      */
     fun getTasks(cookie: String): List<MusicianTask> {
         return HttpUtils.get("/musician/tasks".toApiUrl(cookie), null) { success, _, content, cause ->
-            if (!success) {
-                logger.error(cause) { "请求发生错误." }
-                throw cause!!
-            }
+            requireResponseNotFailure(success, cause)
             Const.gson.fromJson(content!!, MusicianTaskApiResponse::class.java)!!.data["list"]!!
         }
     }
@@ -233,10 +222,7 @@ object NeteaseCloudMusician {
             "/musician/cloudbean/obtain?id=$userMissionId&period=$period".toApiUrl(cookie),
             null
         ) { success, _, content, cause ->
-            if (!success) {
-                logger.error(cause) { "请求发生错误." }
-                throw cause!!
-            }
+            requireResponseNotFailure(success, cause)
 
             val responseEntity = Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!
             responseEntity.code == 200 && responseEntity.message.contentEquals("success", true)
@@ -252,10 +238,7 @@ object NeteaseCloudMusician {
      */
     fun signIn(cookie: String): Boolean {
         return HttpUtils.get("/musician/sign".toApiUrl(cookie), null) { success, _, content, cause ->
-            if (!success) {
-                logger.error(cause) { "请求发生错误." }
-                throw cause!!
-            }
+            requireResponseNotFailure(success, cause)
 
             val responseEntity = Const.gson.fromJson(content!!, ApiResponseEntity::class.java)!!
             val result = responseEntity.code == 200 &&
