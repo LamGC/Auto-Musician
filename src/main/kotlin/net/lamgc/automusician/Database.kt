@@ -95,7 +95,7 @@ fun openDatabaseConnectionOrFailure(jdbcUrl: String, block: (Connection) -> Unit
  * 网易云用户持久化对象.
  */
 object NeteaseCloudUserPO : Table<NeteaseCloudUser>("musician_users") {
-    private val id = long("uid").primaryKey().bindTo { it.uid }
+    val id = long("uid").primaryKey().bindTo { it.uid }
     val cookies = varchar("cookies").bindTo { it.cookies }
     val loginDate = datetime("login_date").bindTo { it.loginDate }
 
