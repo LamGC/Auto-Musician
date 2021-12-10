@@ -67,6 +67,7 @@ object NeteaseCloudMusic {
                 action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
                     logger.debug { "Response: $content" }
                     if (!success) {
+                        logger.error(cause) { "请求发生错误." }
                         throw cause!!
                     } else {
                         return@get Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!.data!!["unikey"]!!
@@ -83,6 +84,7 @@ object NeteaseCloudMusic {
         return HttpUtils.get(url = "/login/qr/create?key=$id&qrimg=true".toApiUrl(),
             action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
                 if (!success) {
+                    logger.error(cause) { "请求发生错误." }
                     throw cause!!
                 } else {
                     val response = Const.gson.fromJson(content!!, ApiResponseEntityMap::class.java)!!
@@ -93,12 +95,14 @@ object NeteaseCloudMusic {
 
     /**
      * 获取 QrCode 登录会话的结果.
-     *
+     * @param loginId 网易云 QrCode 登录会话的 Id.
+     * @return 返回登录状况.
      */
     fun getQrCodeLoginResult(loginId: UUID): QrCodeLoginCheckResponse {
         return HttpUtils.get(url = "/login/qr/check?key=$loginId".toApiUrl(),
             action = { success: Boolean, _: HttpResponse?, content: String?, cause: Throwable? ->
                 if (!success) {
+                    logger.error(cause) { "请求发生错误." }
                     throw cause!!
                 } else {
                     Const.gson.fromJson(content!!, QrCodeLoginCheckResponse::class.java)!!
@@ -217,6 +221,7 @@ object NeteaseCloudMusician {
     fun getTasks(cookie: String): List<MusicianTask> {
         return HttpUtils.get("/musician/tasks".toApiUrl(cookie), null) { success, _, content, cause ->
             if (!success) {
+                logger.error(cause) { "请求发生错误." }
                 throw cause!!
             }
             Const.gson.fromJson(content!!, MusicianTaskApiResponse::class.java)!!.data["list"]!!
@@ -229,6 +234,7 @@ object NeteaseCloudMusician {
             null
         ) { success, _, content, cause ->
             if (!success) {
+                logger.error(cause) { "请求发生错误." }
                 throw cause!!
             }
 
@@ -247,6 +253,7 @@ object NeteaseCloudMusician {
     fun signIn(cookie: String): Boolean {
         return HttpUtils.get("/musician/sign".toApiUrl(cookie), null) { success, _, content, cause ->
             if (!success) {
+                logger.error(cause) { "请求发生错误." }
                 throw cause!!
             }
 
