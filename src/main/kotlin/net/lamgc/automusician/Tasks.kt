@@ -10,11 +10,8 @@ private val logger = KotlinLogging.logger { }
 /**
  * 任务 - 云豆自动领取.
  */
-object AutoReceiveCloudBeans : NeteaseCloudUserTask() {
+object AutoReceiveCloudBeans : NeteaseCloudUserTask({ NeteaseCloudMusician.isCreator(it.cookies) }) {
     override fun action(user: NeteaseCloudUser) {
-        if (!NeteaseCloudMusician.isCreator(user.cookies)) {
-            return
-        }
         NeteaseCloudMusician.getTasks(user.cookies).filter { it.status == 20 }
             .forEach {
                 NeteaseCloudMusician.receiveTaskReward(
@@ -30,12 +27,9 @@ object AutoReceiveCloudBeans : NeteaseCloudUserTask() {
 /**
  * 任务 - 音乐人自动签到.
  */
-object MusicianSignIn : NeteaseCloudUserTask() {
+object MusicianSignIn : NeteaseCloudUserTask({ NeteaseCloudMusician.isCreator(it.cookies) }) {
 
     override fun action(user: NeteaseCloudUser) {
-        if (!NeteaseCloudMusician.isCreator(user.cookies)) {
-            return
-        }
         if (NeteaseCloudMusician.signIn(user.cookies)) {
             logger.info { "音乐人 ${user.uid} 签到完成." }
         } else {

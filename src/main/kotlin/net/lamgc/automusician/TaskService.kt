@@ -7,7 +7,7 @@ import com.cronutils.model.definition.CronDefinitionBuilder
 import com.cronutils.model.time.ExecutionTime
 import com.cronutils.parser.CronParser
 import mu.KotlinLogging
-import org.ktorm.entity.forEach
+import org.ktorm.entity.toList
 import java.text.SimpleDateFormat
 import java.time.ZonedDateTime
 import java.util.*
@@ -94,9 +94,12 @@ object ScheduledTaskExecutor {
 }
 
 interface Task : Runnable
-abstract class NeteaseCloudUserTask : Task {
+abstract class NeteaseCloudUserTask(private val filter: (NeteaseCloudUser) -> Boolean) : Task {
+
+    constructor() : this({ true })
+
     override fun run() {
-        database.NeteaseCloudUserPO.forEach { action(it) }
+        database.NeteaseCloudUserPO.toList().filter(filter).forEach { action(it) }
     }
 
     abstract fun action(user: NeteaseCloudUser)
