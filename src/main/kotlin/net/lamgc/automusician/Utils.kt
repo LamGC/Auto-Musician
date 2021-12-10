@@ -127,46 +127,52 @@ fun HttpResponse.notError(): Boolean {
     return this.code !in 400..599
 }
 
+/**
+ * 多值 Map.
+ *
+ * 通过 Value 为 List, 简化多值存储的操作.
+ * 注意: 本 Map 不支持符号操作, 即使是插入值也不允许 `map[key].add()`, 只能使用 put 方法插入多值.
+ */
 class MultiValueMap<K, V> : MutableMap<K, MutableList<V>> {
 
     private val map = ConcurrentHashMap<K, MutableList<V>>()
+
+    fun isEmpty(key: K) = getValuesByKey(key, false)?.isEmpty() ?: true
+
+    fun containsValue(key: K, value: V): Boolean = getValuesByKey(key)?.contains(value) ?: false
+
+    fun clear(key: K) {
+        getValuesByKey(key, false)?.clear()
+    }
+
+    fun put(key: K, value: V) {
+        getValuesByKey(key, true)!!.add(value)
+    }
+
+    override fun get(key: K): MutableList<V> = getValuesByKey(key) ?: Collections.emptyList()
 
     override fun containsKey(key: K): Boolean = map.containsKey(key)
 
     override fun containsValue(value: MutableList<V>): Boolean = map.containsValue(value)
 
-    fun containsValue(key: K, value: V) {
-        getValuesByKey(key).contains(value)
-    }
-
-    override fun get(key: K): MutableList<V> = getValuesByKey(key, false)
-
     override fun isEmpty(): Boolean = map.isEmpty()
-
-    fun isEmpty(key: K) = getValuesByKey(key, false).isEmpty()
 
     override fun clear() = map.clear()
 
-    fun clear(key: K) = getValuesByKey(key, false).clear()
-
     override fun put(key: K, value: MutableList<V>): MutableList<V>? = map.put(key!!, value)
-
-    fun put(key: K, value: V) {
-        getValuesByKey(key, create = true).add(value)
-    }
 
     override fun putAll(from: Map<out K, MutableList<V>>) = map.putAll(from)
 
     override fun remove(key: K): MutableList<V>? = map.remove(key!!)
 
-    private fun getValuesByKey(key: K, create: Boolean = false): MutableList<V> {
+    private fun getValuesByKey(key: K, create: Boolean = false): MutableList<V>? {
         return if (!map.containsKey(key)) {
             if (create) {
                 val newList = LinkedList<V>()
                 map[key] = newList
                 newList
             } else {
-                Collections.emptyList()
+                null
             }
         } else {
             map[key]!!
