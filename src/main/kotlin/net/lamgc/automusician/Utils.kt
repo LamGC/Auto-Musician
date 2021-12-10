@@ -208,3 +208,7 @@ fun Random.nextString(length: Int = nextInt(32)): String {
     }
     return buffer.toString()
 }
+
+fun <T> List<T>.randomElement(): T {
+    return this[Random.nextInt(this.size)]
+}
