@@ -107,9 +107,13 @@ object KeyUtils {
         val certFactory = CertificateFactory.getInstance("X.509")
         certChainFile.bufferedReader(StandardCharsets.UTF_8).use {
             val pemReader = PemReader(it)
-            val obj = pemReader.readPemObject()
-            certList.add(certFactory.generateCertificate(obj.content.inputStream()))
+            var obj = pemReader.readPemObject()
+            while (obj != null) {
+                certList.add(certFactory.generateCertificate(obj.content.inputStream()))
+                obj = pemReader.readPemObject()
+            }
         }
+        logger.debug { "Certificate chain length: ${certList.size}" }
         return certList.toArray(emptyArray())
     }
 }
