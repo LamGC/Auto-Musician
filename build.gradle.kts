@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     // Logging
-    implementation("io.github.microutils:kotlin-logging:2.0.11")
+    implementation("io.github.microutils:kotlin-logging:2.1.0")
     implementation("ch.qos.logback:logback-classic:1.2.7")
 
     implementation("org.apache.httpcomponents.client5:httpclient5:5.1.1")
@@ -47,8 +47,13 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+    targetCompatibility = JavaVersion.VERSION_11.majorVersion
+}
+
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "11"
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_11.majorVersion
 }
 
 application {
