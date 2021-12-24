@@ -16,6 +16,7 @@
         </encoder>
     </appender>
 
+    <logger name="org.ktorm.database" level="INFO"/>
     <root level="INFO">
         <appender-ref ref="STD_OUT" />
         <appender-ref ref="FILE_OUT" />
