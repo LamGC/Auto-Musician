@@ -15,8 +15,8 @@ repositories {
 
 dependencies {
     // Logging
-    implementation("io.github.microutils:kotlin-logging:2.1.0")
-    implementation("ch.qos.logback:logback-classic:1.2.7")
+    implementation("io.github.microutils:kotlin-logging:2.1.21")
+    implementation("ch.qos.logback:logback-classic:1.2.10")
 
     implementation("org.apache.httpcomponents.client5:httpclient5:5.1.1")
 
@@ -35,7 +35,7 @@ dependencies {
     implementation("org.bouncycastle:bcpkix-jdk15to18:1.70")
 
     // Ktor
-    val ktorVersion = "1.6.6"
+    val ktorVersion = "1.6.7"
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-html-builder:$ktorVersion")
     implementation("io.ktor:ktor-network-tls-certificates:$ktorVersion")
@@ -64,5 +64,7 @@ application {
         workdir.mkdirs()
     }
     tasks["run"].setProperty("workingDir", workdir)
-
+    applicationDefaultJvmArgs = listOf(
+        "-Dio.ktor.development=true"
+    )
 }
