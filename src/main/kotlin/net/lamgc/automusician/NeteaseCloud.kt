@@ -28,7 +28,7 @@ interface NeteaseCloudUser : Entity<NeteaseCloudUser> {
  * @param cookie 请求所使用的 Cookie.
  * @return 返回构造好的 ApiUrl.
  */
-internal fun String.toApiUrl(cookie: String? = null): String {
+internal fun String.toApiUrl(cookie: String? = null, refresh: Boolean = true): String {
     val apiUrl = if (this.startsWith("/")) {
         if (Const.config.apiServer.endsWith("/")) {
             Const.config.apiServer + this.substring(1)
@@ -43,11 +43,23 @@ internal fun String.toApiUrl(cookie: String? = null): String {
         }
     }
 
-    return if (apiUrl.indexOf("?") == -1) {
-        apiUrl + "?time=${System.currentTimeMillis()}"
+    val result = StringBuilder(apiUrl)
+    if (cookie != null) {
+        result.addQueryString("cookie", cookie)
+    }
+    if (refresh) {
+        result.addQueryString("time", System.currentTimeMillis())
+    }
+    return result.toString()
+}
+
+internal fun StringBuilder.addQueryString(key: String, value: Any) {
+    val encodedValue = URLEncoder.encode(if (value is String) value else value.toString(), StandardCharsets.UTF_8)
+    if (this.indexOf("?") == -1) {
+        this.append("?").append(key).append('=').append(encodedValue)
     } else {
-        apiUrl + "&time=${System.currentTimeMillis()}"
-    } + if (cookie != null) "&cookie=${URLEncoder.encode(cookie, StandardCharsets.UTF_8)}" else ""
+        this.append("&").append(key).append('=').append(encodedValue)
+    }
 }
 
 private fun requireResponseNotFailure(success: Boolean, cause: Throwable?) {
