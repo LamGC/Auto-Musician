@@ -1,4 +1,11 @@
-# Musician-Auto-Check-Web
+<div style="text-align: center;">
+
+# Auto-Musician
+
+![Build Status](https://ci.lamgc.moe/job/Auto-Musician/job/main/badge/icon
+)
+
+</div>
 
 ## 使用
 
