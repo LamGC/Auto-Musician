@@ -13,12 +13,14 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private val logger = KotlinLogging.logger { }
 
-interface NeteaseCloudUser : Entity<NeteaseCloudUser> {
+interface NeteaseCloudUser : Entity<NeteaseCloudUser>, OperatedObject {
     companion object : Entity.Factory<NeteaseCloudUser>()
 
     var uid: Long
     var cookies: String
     var loginDate: LocalDateTime
+
+    override fun objectIdentity(): String = uid.toString()
 }
 
 /**

@@ -14,12 +14,12 @@ import java.util.*
 import java.util.concurrent.*
 
 private val logger = KotlinLogging.logger { }
+private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH-mm-ss:SSS")
 
 /**
  * 任务管理器.
  */
 object TaskManager {
-    private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH-mm-ss:SSS")
     private val triggerMap: MutableMap<Task, TaskTrigger> = ConcurrentHashMap()
     private val lastFutureMap: MutableMap<Task, ScheduledFuture<*>> = ConcurrentHashMap()
 
@@ -77,7 +77,11 @@ private class TaskExecuteWrapper(val task: Task) : Runnable {
         try {
             task.run()
         } finally {
-            TaskManager.scheduleTask(task)
+            val nextExecuteTime = TaskManager.scheduleTask(task)
+            logger.debug {
+                "任务 ${task::class.java} 下一次执行时间: " +
+                        dateFormat.format(Date(System.currentTimeMillis() + nextExecuteTime))
+            }
         }
     }
 
@@ -93,13 +97,37 @@ object ScheduledTaskExecutor {
 
 }
 
-interface Task : Runnable
-abstract class NeteaseCloudUserTask(private val filter: (NeteaseCloudUser) -> Boolean) : Task {
+interface Task : Runnable {
+    /**
+     * 获取任务执行器 Id.
+     * @return 获取该任务执行器的 Id, 不同的任务执行器 Id 不同.
+     */
+    fun getTaskId(): String = this::class.java.name
+}
 
-    constructor() : this({ true })
+abstract class NeteaseCloudUserTask(private val filter: (NeteaseCloudUser) -> Boolean = { true }) : Task {
 
     override fun run() {
         database.NeteaseCloudUserPO.toList().filter(filter).forEach { action(it) }
+    }
+
+    abstract fun action(user: NeteaseCloudUser)
+}
+
+abstract class OnceNeteaseCloudUserTask(
+    private val filter: (NeteaseCloudUser) -> Boolean = { true },
+    private val onceExpire: (() -> Long)
+) : Task {
+
+    final override fun run() {
+        val recorder = StateCacheBox.getExecutionRecorder(this, expireTimeProvider = onceExpire)
+        database.NeteaseCloudUserPO.toList()
+            .filter(recorder::notExecuted)
+            .filter(filter)
+            .forEach {
+                action(it)
+                recorder.setExecuted(it)
+            }
     }
 
     abstract fun action(user: NeteaseCloudUser)

@@ -27,7 +27,8 @@ object AutoReceiveCloudBeans : NeteaseCloudUserTask({ NeteaseCloudMusician.isCre
 /**
  * 任务 - 音乐人自动签到.
  */
-object MusicianSignIn : NeteaseCloudUserTask({ NeteaseCloudMusician.isCreator(it.cookies) }) {
+object MusicianSignIn :
+    OnceNeteaseCloudUserTask({ NeteaseCloudMusician.isCreator(it.cookies) }, OnceExpire.DAILY_ROUND) {
 
     override fun action(user: NeteaseCloudUser) {
         if (NeteaseCloudMusician.signIn(user.cookies)) {

@@ -28,6 +28,8 @@ dependencies {
 
     implementation("com.cronutils:cron-utils:9.1.6")
 
+    implementation("org.mapdb:mapdb:3.0.8")
+
     // Test
     testImplementation("org.jetbrains.kotlin:kotlin-test:1.5.31")
 
