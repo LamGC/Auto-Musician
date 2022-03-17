@@ -76,6 +76,8 @@ private class TaskExecuteWrapper(val task: Task) : Runnable {
     override fun run() {
         try {
             task.run()
+        } catch (e: Exception) {
+            logger.error(e) { "任务执行时发生错误." }
         } finally {
             val nextExecuteTime = TaskManager.scheduleTask(task)
             logger.debug {
