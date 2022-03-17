@@ -16,15 +16,15 @@ repositories {
 dependencies {
     // Logging
     implementation("io.github.microutils:kotlin-logging:2.1.21")
-    implementation("ch.qos.logback:logback-classic:1.2.10")
+    implementation("ch.qos.logback:logback-classic:1.2.11")
 
-    implementation("org.apache.httpcomponents.client5:httpclient5:5.1.1")
+    implementation("org.apache.httpcomponents.client5:httpclient5:5.1.3")
 
     // Json
-    implementation("com.google.code.gson:gson:2.8.9")
+    implementation("com.google.code.gson:gson:2.9.0")
 
     implementation("org.ktorm:ktorm-core:3.4.1")
-    runtimeOnly("mysql:mysql-connector-java:8.0.27")
+    runtimeOnly("mysql:mysql-connector-java:8.0.28")
 
     implementation("com.cronutils:cron-utils:9.1.6")
 
